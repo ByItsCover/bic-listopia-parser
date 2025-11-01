@@ -17,9 +17,10 @@ builder.Configuration
 
 builder.Services.Configure<ListopiaOptions>(builder.Configuration.GetSection("ListopiaOptions"));
 builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("HardcoverOptions"));
-builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("Howdy"));
+builder.Services.Configure<ClipOptions>(builder.Configuration.GetSection("ClipOptions"));
 builder.Services.AddHttpClient<ListopiaService>();
 builder.Services.AddHttpClient<HardcoverService>();
+builder.Services.AddHttpClient<ClipService>();
 builder.Services.AddHostedService<ListopiaParserRunner>();
 
 var host = builder.Build();
