@@ -1,9 +1,9 @@
+using System.Text.Json;
 using AngleSharp;
 using ListopiaParser.Configs;
-using Microsoft.Extensions.Options;
-using System.Text.Json;
 using ListopiaParser.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ListopiaParser.Services;
 
