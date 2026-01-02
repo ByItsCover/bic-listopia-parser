@@ -21,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: ByItsCover-Dev
 
+    env:
+      TFC_AWS_PROVIDER_AUTH: true
+      TFC_AWS_PLAN_ROLE_ARN: ${{secrets.TFC_AWS_PLAN_ROLE_ARN}}
+
     defaults:
       run:
         working-directory: infra/
@@ -39,7 +43,7 @@ jobs:
       - name: Hashicorp - Terraform setup
         uses: hashicorp/setup-terraform@v3.1.2
         with:
-          terraform_wrapper: false
+          #terraform_wrapper: false
           cli_config_credentials_token: ${{secrets.TF_API_TOKEN}}
 
       # To speed up the workflow, we cache the .terraform directory and terrraform providers
