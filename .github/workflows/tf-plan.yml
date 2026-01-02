@@ -64,7 +64,7 @@ jobs:
 
       # Runs a set of terraform commands using the runners shell
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -var-file=variables/prod.tfvars
 
       - name: Terraform Validate
         run: |
