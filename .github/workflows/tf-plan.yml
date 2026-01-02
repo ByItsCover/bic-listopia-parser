@@ -82,7 +82,6 @@ jobs:
       - name: Terraform Plan
         run: |
           echo $AWS_REGION
-          aws sts get-caller-identity
           echo "Yuh"
           terraform plan -var-file=variables/prod.tfvars
 
