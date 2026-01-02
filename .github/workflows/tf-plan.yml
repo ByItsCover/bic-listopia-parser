@@ -58,12 +58,12 @@ jobs:
           restore-keys: |
             terraform-${{ runner.os }}-
 
-      - name: Configure AWS Credentials for github actions
-        uses: aws-actions/configure-aws-credentials@v5.1.1
-        with:
-          audience: sts.amazonaws.com
-          aws-region: ${{secrets.AWS_REGION}}
-          role-to-assume: ${{secrets.ROLE_TO_ASSUME}} #change to reflect IAM role’s ARN
+      # - name: Configure AWS Credentials for github actions
+      #   uses: aws-actions/configure-aws-credentials@v5.1.1
+      #   with:
+      #     audience: sts.amazonaws.com
+      #     aws-region: ${{secrets.AWS_REGION}}
+      #     role-to-assume: ${{secrets.ROLE_TO_ASSUME}} #change to reflect IAM role’s ARN
 
       # Runs a set of terraform commands using the runners shell
       - name: Terraform Init
