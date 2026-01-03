@@ -23,7 +23,7 @@ jobs:
 
     env:
       variable-file: variables/prod.tfvars
-      TF_API_TOKEN: ${{secrets.TF_API_TOKEN}}
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
 
     defaults:
       run:
@@ -43,7 +43,7 @@ jobs:
       - name: Hashicorp - Terraform setup
         uses: hashicorp/setup-terraform@v3.1.2
         with:
-          cli_config_credentials_token: $TF_API_TOKEN
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
 
       # Runs a set of terraform commands using the runners shell
       - name: Terraform Init
@@ -56,4 +56,4 @@ jobs:
         continue-on-error: false
 
       - name: Terraform Plan
-        run: terraform plan -var-file=$variable-file
+        run: terraform plan -var-file=${{ env.variable-file }
