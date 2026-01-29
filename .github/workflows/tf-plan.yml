@@ -1,0 +1,51 @@
+name: terraform-plan
+
+on:
+  # Triggers the workflow on pull request event but only for the "master" branch
+  workflow_dispatch:
+  pull_request:
+    branches: ["master"]
+
+permissions:
+  id-token: write
+  contents: read
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  plan:
+    # The type of runner that the job will run on
+    name: Terraform plan
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/
+
+    env:
+      ENVIRONMENT: prod
+      TF_CLOUD_PROJECT: ByItsCover_PROD
+      TF_WORKSPACE: bic-embed-server-prod
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Hashicorp - Terraform setup
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      # Runs a set of terraform commands using the runners shell
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: |
+          terraform fmt -recursive
+          terraform validate
+        continue-on-error: false
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=variables/${{ env.ENVIRONMENT }}.tfvars

@@ -1,10 +1,6 @@
 terraform {
   cloud {
     organization = "ByItsCover"
-
-    workspaces {
-      name    = "By_Its_Cover_Dev"
-    }
   }
 
   required_providers {
