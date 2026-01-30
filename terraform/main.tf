@@ -1,8 +1,8 @@
 locals {
-  ecr_repo       = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
-  batch_role_arn = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
-  ecs_instance_role_arn   = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
-  batch_sg_id    = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
+  ecr_repo              = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
+  batch_role_arn        = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
+  ecs_instance_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
+  batch_sg_id           = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
 
   rds_connection_str = join("", [
     "Host=localhost:${var.rds_host_port};",
@@ -21,6 +21,10 @@ resource "aws_launch_template" "batch_launch_template" {
 
   block_device_mappings {
     device_name = "/dev/sdf"
+
+    ebs {
+      volume_size = 20
+    }
   }
 
   image_id = data.aws_ssm_parameter.image_id.value
