@@ -31,7 +31,7 @@ resource "aws_launch_template" "batch_launch_template" {
 }
 
 resource "aws_batch_compute_environment" "spot" {
-  compute_environment_name = "spot-fleet"
+  name_prefix = "spot-fleet-"
 
   compute_resources {
     allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
