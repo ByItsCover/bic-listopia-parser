@@ -20,10 +20,10 @@ data "aws_ssm_parameter" "image_id" {
 resource "aws_launch_template" "batch_launch_template" {
 
   block_device_mappings {
-    device_name = "/dev/sdf"
+    device_name = "/dev/xvda"
 
     ebs {
-      volume_size = 20
+      volume_size = 50
     }
   }
 
