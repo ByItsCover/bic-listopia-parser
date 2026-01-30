@@ -24,7 +24,7 @@ jobs:
     env:
       ENVIRONMENT: prod
       TF_CLOUD_PROJECT: ByItsCover_PROD
-      TF_WORKSPACE: bic-embed-server-prod
+      TF_WORKSPACE: bic-listopia-parser-prod
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:

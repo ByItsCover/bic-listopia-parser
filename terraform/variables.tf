@@ -19,3 +19,21 @@ variable "bic_infra_workspace" {
 }
 
 # Batch
+
+variable "dotnet_environment" {
+  type        = string
+  description = "The ASPNETCORE_ENVIRONMENT for the AWS batch container"
+}
+
+# RDS
+
+variable "rds_host_port" {
+  type        = number
+  description = "Port of the RDS database host"
+  default     = 5432
+}
+
+variable "rds_database_name" {
+  type        = string
+  description = "RDS database name"
+}
