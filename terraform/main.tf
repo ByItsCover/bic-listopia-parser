@@ -62,10 +62,6 @@ resource "aws_batch_compute_environment" "spot" {
 
   service_role = local.batch_role_arn
   type         = "MANAGED"
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "aws_batch_job_queue" "queue" {
@@ -77,6 +73,13 @@ resource "aws_batch_job_queue" "queue" {
     order               = 1
     compute_environment = aws_batch_compute_environment.spot.arn
   }
+
+  lifecycle {
+    replace_triggered_by = [
+      aws_batch_compute_environment.spot.id
+    ]
+  }
+
 }
 
 data "aws_ecr_image" "server_image" {
