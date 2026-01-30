@@ -1,7 +1,7 @@
 locals {
   ecr_repo       = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
   batch_role_arn = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
-  # ecs_role_arn   = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
+  ecs_instance_role_arn   = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
   batch_sg_id    = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
 
   rds_connection_str = join("", [
@@ -26,14 +26,13 @@ resource "aws_launch_template" "batch_launch_template" {
   image_id = data.aws_ssm_parameter.image_id.value
 }
 
-/*
 resource "aws_batch_compute_environment" "spot" {
   compute_environment_name = "spot-fleet"
 
   compute_resources {
     allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
 
-    instance_role = local.ecs_role_arn
+    instance_role = local.ecs_instance_role_arn
     instance_type = [
       "optimal"
     ]
@@ -71,7 +70,6 @@ resource "aws_batch_job_queue" "queue" {
     compute_environment = aws_batch_compute_environment.spot.arn
   }
 }
-*/
 
 data "aws_ecr_image" "server_image" {
   repository_name = local.ecr_repo
