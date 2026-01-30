@@ -62,6 +62,10 @@ resource "aws_batch_compute_environment" "spot" {
 
   service_role = local.batch_role_arn
   type         = "MANAGED"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_batch_job_queue" "queue" {
