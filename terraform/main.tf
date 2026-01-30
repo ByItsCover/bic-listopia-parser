@@ -56,7 +56,7 @@ resource "aws_batch_compute_environment" "spot" {
 
     launch_template {
       launch_template_id = aws_launch_template.batch_launch_template.id
-      version            = "$Latest"
+      version            = aws_launch_template.batch_launch_template.latest_version
     }
   }
 
