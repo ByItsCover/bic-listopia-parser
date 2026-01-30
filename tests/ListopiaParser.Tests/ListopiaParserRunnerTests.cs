@@ -13,6 +13,7 @@ namespace ListopiaParser.Tests;
 
 public class ListopiaParserRunnerTests
 {
+    private Mock<IHostApplicationLifetime> _lifetimeMock;
     private Mock<IListopiaService> _listopiaServiceMock;
     private Mock<IHardcoverService> _hardcoverServiceMock;
     private Mock<IEmbedService> _embedServiceMock;
@@ -28,6 +29,7 @@ public class ListopiaParserRunnerTests
     [SetUp]
     public async Task Setup()
     {
+        _lifetimeMock = new Mock<IHostApplicationLifetime>();
         _listopiaServiceMock = new Mock<IListopiaService>();
         _hardcoverServiceMock = new Mock<IHardcoverService>();
         _embedServiceMock = new Mock<IEmbedService>();
@@ -67,6 +69,7 @@ public class ListopiaParserRunnerTests
         _services.AddPostgresVectorStore();
         
         _services.AddSingleton<IHostedService, ListopiaParserRunner>();
+        _services.AddSingleton(_lifetimeMock.Object);
         _services.AddSingleton(_listopiaServiceMock.Object);
         _services.AddSingleton(_hardcoverServiceMock.Object);
         _services.AddSingleton(_embedServiceMock.Object);
@@ -87,6 +90,8 @@ public class ListopiaParserRunnerTests
         await Task.Delay(500, CancellationToken.None);
         await _sut.StopAsync(CancellationToken.None);
         
+        _lifetimeMock.Verify(x => x.StopApplication(),
+            Times.Once);
         _listopiaServiceMock.Verify(x => x.GetListopiaIsbns(
             It.IsInRange(1, _listopiaOptionValues.Pages, Moq.Range.Inclusive),
             It.IsAny<CancellationToken>()
