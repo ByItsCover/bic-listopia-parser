@@ -39,7 +39,7 @@ resource "aws_batch_compute_environment" "spot" {
 
     instance_role = local.ecs_instance_role_arn
     instance_type = [
-      "optimal"
+      "default_arm64"
     ]
 
 
