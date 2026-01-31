@@ -91,7 +91,7 @@ resource "aws_batch_job_definition" "job" {
   name = "listopia_parser_batch_job_definition"
   type = "container"
   container_properties = jsonencode({
-    image = data.aws_ecr_image.server_image.id
+    image = data.aws_ecr_image.server_image.image_uri
 
     resourceRequirements = [
       {
