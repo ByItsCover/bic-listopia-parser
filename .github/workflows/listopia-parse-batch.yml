@@ -1,0 +1,53 @@
+name: listopia-parse-batch
+
+on:
+  # Triggers the workflow on push request event but only for the "master" branch
+  workflow_dispatch:
+    inputs:
+      jobName:
+        description: 'Job Name'
+        required: true
+        type: string
+      queue:
+        description: 'Batch Queue Name'
+        required: true
+        default: 'queue'
+        type: choice
+        options:
+        - queue
+      jobDefinition:
+        description: 'Batch Job Definition'
+        required: true
+        default: 'listopia_parser_batch_job_definition'
+        type: choice
+        options:
+        - listopia_parser_batch_job_definition
+
+permissions:
+  id-token: write
+  contents: read
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  submit-batch:
+    name: Submit Batch Job
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials for github actions
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE }}
+
+      - name: Submit Job
+        run: |
+          aws batch submit-job \
+              --job-name ${{ inputs.jobName }} \
+              --job-queue ${{ inputs.queue }} \
+              --job-definition ${{ inputs.jobDefinition }} \
+              --region ${{ secrets.AWS_REGION }}
