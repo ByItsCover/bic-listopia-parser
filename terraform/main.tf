@@ -15,7 +15,7 @@ locals {
 
 
 data "aws_ssm_parameter" "image_id" {
-  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64"
+  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id"
 }
 
 resource "aws_launch_template" "batch_launch_template" {
@@ -26,6 +26,11 @@ resource "aws_launch_template" "batch_launch_template" {
     ebs {
       volume_size = 50
     }
+  }
+
+  metadata_options {
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
   }
 
   image_id = data.aws_ssm_parameter.image_id.value
