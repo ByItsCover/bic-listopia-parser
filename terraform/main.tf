@@ -5,7 +5,7 @@ locals {
   batch_sg_id           = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
 
   rds_connection_str = join("", [
-    "Host=${data.terraform_remote_state.bic_infra.outputs.rds_endpoint};",
+    "Host=${data.terraform_remote_state.bic_infra.outputs.db_endpoint};",
     "Port=${var.rds_host_port};",
     "Database=${var.rds_database_name};",
     "Username=${data.terraform_remote_state.bic_infra.outputs.db_master_username};",
