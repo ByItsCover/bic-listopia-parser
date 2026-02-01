@@ -22,7 +22,7 @@ FROM build AS publish
 RUN dotnet publish "src/ListopiaParser/ListopiaParser.csproj" -c Release -o /publish -a ${TARGETARCH}
 
 # Stage 2: Runtime
-FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/runtime:9.0 AS final
+FROM --platform=${TARGETPLATFORM} mcr.microsoft.com/dotnet/runtime:9.0 AS final
 WORKDIR /app
 
 # Copy the published output from the build stage
