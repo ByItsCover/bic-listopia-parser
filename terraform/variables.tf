@@ -37,3 +37,9 @@ variable "rds_database_name" {
   type        = string
   description = "RDS database name"
 }
+
+variable "rds_timeout" {
+  type        = number
+  description = "Timeout for RDS database connection establishment"
+  default     = 30
+}

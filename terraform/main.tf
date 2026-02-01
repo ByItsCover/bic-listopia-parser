@@ -9,7 +9,8 @@ locals {
     "Port=${var.rds_host_port};",
     "Database=${var.rds_database_name};",
     "Username=${data.terraform_remote_state.bic_infra.outputs.db_master_username};",
-    "Password=${data.terraform_remote_state.bic_infra.outputs.db_master_password}"
+    "Password=${data.terraform_remote_state.bic_infra.outputs.db_master_password};",
+    "Timeout=${var.rds_timeout};"
   ])
 }
 

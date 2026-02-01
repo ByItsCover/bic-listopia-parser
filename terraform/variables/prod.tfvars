@@ -9,3 +9,4 @@ dotnet_environment = "Production"
 # RDS
 rds_host_port     = 5432
 rds_database_name = "coverdb"
+rds_timeout       = 60
