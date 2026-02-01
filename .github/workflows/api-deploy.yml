@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Docker Build
-        run: docker build -t ${{ secrets.AWS_ACCOUNT }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPO }} .
+        run: docker build --platform linux/arm64 -t ${{ secrets.AWS_ACCOUNT }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.AWS_ECR_REPO }} .
 
       - name: Configure AWS Credentials for github actions
         uses: aws-actions/configure-aws-credentials@v4.0.2
