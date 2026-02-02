@@ -1,7 +1,6 @@
 name: listopia-parse-batch
 
 on:
-  # Triggers the workflow on push request event but only for the "master" branch
   workflow_dispatch:
     inputs:
       jobName:
@@ -22,12 +21,21 @@ on:
         type: choice
         options:
         - listopia_parser_batch_job_definition
+      listopiaUrl:
+        description: 'Listopia URL For Scraping'
+        required: true
+        default: 'https://www.goodreads.com/list/show/4581.Judge_A_Book_By_Its_Cover_'
+        type: string
+      pageCount:
+        description: 'Number of Listopia Pages to Scrape'
+        required: true
+        default: 10
+        type: number
 
 permissions:
   id-token: write
   contents: read
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   submit-batch:
     name: Submit Batch Job
@@ -47,7 +55,18 @@ jobs:
       - name: Submit Job
         run: |
           aws batch submit-job \
-              --job-name ${{ inputs.jobName }} \
+              --job-name ${{ inputs.jobName }}-${{ github.run_id }} \
               --job-queue ${{ inputs.queue }} \
               --job-definition ${{ inputs.jobDefinition }} \
-              --region ${{ secrets.AWS_REGION }}
+              --container-overrides '{
+                "environment": [
+                  {
+                    "name": "ListopiaOptions__ListopiaUrl",
+                    "value": "${{ inputs.listopiaUrl }}"
+                  },
+                  {
+                    "name": "ListopiaOptions__Pages",
+                    "value": "${{ inputs.pageCount }}"
+                  }
+                ]
+              }'

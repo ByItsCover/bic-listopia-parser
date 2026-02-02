@@ -1,7 +1,6 @@
 name: terraform-plan
 
 on:
-  # Triggers the workflow on pull request event but only for the "master" branch
   workflow_dispatch:
   pull_request:
     branches: ["master"]
@@ -10,10 +9,8 @@ permissions:
   id-token: write
   contents: read
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   plan:
-    # The type of runner that the job will run on
     name: Terraform plan
     runs-on: ubuntu-latest
 
@@ -27,9 +24,7 @@ jobs:
       TF_WORKSPACE: bic-listopia-parser-prod
       TF_VAR_hardcover_api_key: secrets.HARDCOVER_API_KEY
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -38,7 +33,6 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      # Runs a set of terraform commands using the runners shell
       - name: Terraform Init
         run: terraform init
 
