@@ -1,8 +1,9 @@
 locals {
-  ecr_repo              = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
-  batch_role_arn        = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
-  ecs_instance_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
-  batch_sg_id           = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
+  ecr_repo               = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
+  batch_role_arn         = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
+  ecs_instance_role_arn  = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
+  ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
+  batch_sg_id            = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
 
   rds_connection_str = join("", [
     "Host=${data.terraform_remote_state.bic_infra.outputs.db_endpoint};",
@@ -73,7 +74,7 @@ resource "aws_batch_compute_environment" "spot" {
 
 resource "aws_ecs_cluster" "spot" {
   name = basename(aws_batch_compute_environment.spot.ecs_cluster_arn)
-  
+
   setting {
     name  = "containerInsights"
     value = "enabled"
@@ -108,6 +109,8 @@ resource "aws_batch_job_definition" "job" {
   type = "container"
   container_properties = jsonencode({
     image = data.aws_ecr_image.server_image.image_uri
+
+    executionRoleArn = local.ecs_execution_role_arn
 
     resourceRequirements = [
       {
