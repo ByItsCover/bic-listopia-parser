@@ -28,7 +28,7 @@ variable "dotnet_env" {
 variable "hardcover_api_key" {
   type        = string
   description = "The Hardcover API Key"
-  sensitive = true
+  sensitive   = true
 }
 
 # RDS
