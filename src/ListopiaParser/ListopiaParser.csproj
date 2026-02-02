@@ -29,6 +29,7 @@
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />
       <PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="1.67.1-preview" />
+      <PackageReference Include="Polly" Version="8.6.5" />
     </ItemGroup>
 
 </Project>

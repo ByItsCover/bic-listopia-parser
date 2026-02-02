@@ -8,12 +8,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
+using Polly;
 
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? string.Empty;
 var connString = Environment.GetEnvironmentVariable("PGVECTOR_CONN") ?? string.Empty;
 var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? string.Empty;
+var options = new HostApplicationBuilderSettings 
+{
+    EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+};
 
-var builder = Host.CreateApplicationBuilder();
+var builder = Host.CreateApplicationBuilder(options);
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{env}.json", true, true)
@@ -26,24 +31,36 @@ builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
     dataSourceBuilder.UseVector();
     var datasource = dataSourceBuilder.Build();
 
-    var conn = datasource.OpenConnection();
-    using var cmd = new NpgsqlCommand("CREATE EXTENSION IF NOT EXISTS vector", conn);
-    cmd.ExecuteNonQuery();
+    var retryPolicy = Policy
+        .Handle<NpgsqlException>(ex => ex.IsTransient) 
+        .Or<TimeoutException>()
+        .WaitAndRetry(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+    retryPolicy.Execute(() =>
+    {
+        var conn = datasource.OpenConnection();
+        using var cmd = new NpgsqlCommand("CREATE EXTENSION IF NOT EXISTS vector", conn);
+        cmd.ExecuteNonQuery();
+    });
+    
     return datasource;
 });
 builder.Services.AddPostgresVectorStore();
 
-builder.Services.AddSingleton<AWSCredentials>(_ => FallbackCredentialsFactory.GetCredentials());
-builder.Services.AddTransient<AwsSignatureHandler>()
-    .AddTransient(sp =>
-    {
-        var credProvider = sp.GetRequiredService<AWSCredentials>();
-        var immutableCreds = credProvider.GetCredentials();
-        return new AwsSignatureHandlerSettings(
-            awsRegion,
-            "execute-api",
-            immutableCreds);
-    });
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<AWSCredentials>(_ => FallbackCredentialsFactory.GetCredentials());
+    builder.Services.AddTransient<AwsSignatureHandler>()
+        .AddTransient(sp =>
+        {
+            var credProvider = sp.GetRequiredService<AWSCredentials>();
+            var immutableCreds = credProvider.GetCredentials();
+            return new AwsSignatureHandlerSettings(
+                awsRegion,
+                "execute-api",
+                immutableCreds);
+        });
+}
 
 builder.Services.Configure<ListopiaOptions>(builder.Configuration.GetSection("ListopiaOptions"));
 builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("HardcoverOptions"));
@@ -51,8 +68,9 @@ builder.Services.Configure<EmbedOptions>(builder.Configuration.GetSection("Embed
 builder.Services.Configure<PgVectorOptions>(builder.Configuration.GetSection("PgVectorOptions"));
 builder.Services.AddHttpClient<IListopiaService, ListopiaService>();
 builder.Services.AddHttpClient<IHardcoverService, HardcoverService>();
-builder.Services.AddHttpClient<IEmbedService, EmbedService>()
-    .AddHttpMessageHandler<AwsSignatureHandler>();
+var embedClientBuilder = builder.Services.AddHttpClient<IEmbedService, EmbedService>();
+if (!builder.Environment.IsDevelopment())
+    embedClientBuilder.AddHttpMessageHandler<AwsSignatureHandler>();
 builder.Services.AddHostedService<ListopiaParserRunner>();
 
 var host = builder.Build();
