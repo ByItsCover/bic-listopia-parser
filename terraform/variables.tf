@@ -31,6 +31,12 @@ variable "hardcover_api_key" {
   sensitive   = true
 }
 
+variable "max_duration" {
+  type        = number
+  description = "Maximum duration for batch task, after which will be terminated"
+  default     = 3600
+}
+
 # RDS
 
 variable "rds_host_port" {

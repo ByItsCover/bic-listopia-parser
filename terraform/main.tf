@@ -11,7 +11,8 @@ locals {
     "Database=${var.rds_database_name};",
     "Username=${data.terraform_remote_state.bic_infra.outputs.db_master_username};",
     "Password=${data.terraform_remote_state.bic_infra.outputs.db_master_password};",
-    "Timeout=${var.rds_timeout};"
+    "Timeout=${var.rds_timeout};",
+    "CommandTimeout=${var.rds_timeout};"
   ])
 }
 
@@ -136,4 +137,8 @@ resource "aws_batch_job_definition" "job" {
       }
     ]
   })
+
+  timeout {
+    attempt_duration_seconds = var.max_duration
+  }
 }
