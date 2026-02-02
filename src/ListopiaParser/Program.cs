@@ -1,4 +1,6 @@
-﻿using ListopiaParser;
+﻿using Amazon.Runtime;
+using AwsSignatureVersion4;
+using ListopiaParser;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using ListopiaParser.Services;
@@ -9,6 +11,7 @@ using Npgsql;
 
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? string.Empty;
 var connString = Environment.GetEnvironmentVariable("PGVECTOR_CONN") ?? string.Empty;
+var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? string.Empty;
 
 var builder = Host.CreateApplicationBuilder();
 builder.Configuration
@@ -30,13 +33,25 @@ builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
 });
 builder.Services.AddPostgresVectorStore();
 
+builder.Services.AddTransient<AwsSignatureHandler>()
+    .AddTransient(_ =>
+    {
+        var credentials = FallbackCredentialsFactory.GetCredentials();
+        var immutableCreds = credentials.GetCredentials();
+        return new AwsSignatureHandlerSettings(
+            awsRegion,
+            "execute-api",
+            immutableCreds);
+    });
+
 builder.Services.Configure<ListopiaOptions>(builder.Configuration.GetSection("ListopiaOptions"));
 builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("HardcoverOptions"));
 builder.Services.Configure<EmbedOptions>(builder.Configuration.GetSection("EmbedOptions"));
 builder.Services.Configure<PgVectorOptions>(builder.Configuration.GetSection("PgVectorOptions"));
 builder.Services.AddHttpClient<IListopiaService, ListopiaService>();
 builder.Services.AddHttpClient<IHardcoverService, HardcoverService>();
-builder.Services.AddHttpClient<IEmbedService, EmbedService>();
+builder.Services.AddHttpClient<IEmbedService, EmbedService>()
+    .AddHttpMessageHandler<AwsSignatureHandler>();
 builder.Services.AddHostedService<ListopiaParserRunner>();
 
 var host = builder.Build();

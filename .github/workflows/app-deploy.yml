@@ -1,4 +1,4 @@
-name: api-deploy
+name: app-deploy
 
 on:
   # Triggers the workflow on push request event but only for the "master" branch
@@ -12,9 +12,32 @@ permissions:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  check-changes:
+    name: Check for Changes
+    runs-on: ubuntu-latest
+
+    outputs:
+      should_deploy: ${{ steps.filter.outputs.src }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Paths Filter
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - '**'
+              - '!terraform/**'
+              - '**.md'
+
   docker-deploy:
     name: Docker Deploy
     runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.should_deploy == 'true'
 
     env:
       AWS_ECR_REPO: listopia-parser
@@ -36,7 +59,7 @@ jobs:
       - name: Docker Login
         run: |
           aws ecr get-login-password \
-              --region ${{ secrets.AWS_REGION }} \
+              --region ${{ secrets.AWS_REGION }}
           | docker login \
               --username AWS \
               --password-stdin ${{ secrets.AWS_ACCOUNT }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
@@ -49,6 +72,7 @@ jobs:
     name: Terraform apply
     runs-on: ubuntu-latest
     needs: docker-deploy
+    if: ${{ always() && !failure() && !cancelled() }}
 
     defaults:
       run:
