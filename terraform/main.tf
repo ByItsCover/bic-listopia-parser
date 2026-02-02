@@ -72,15 +72,6 @@ resource "aws_batch_compute_environment" "spot" {
   type         = "MANAGED"
 }
 
-resource "aws_ecs_cluster" "spot" {
-  name = basename(aws_batch_compute_environment.spot.ecs_cluster_arn)
-
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
-
 resource "aws_batch_job_queue" "queue" {
   name     = "queue"
   state    = "ENABLED"
