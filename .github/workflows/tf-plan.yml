@@ -22,7 +22,7 @@ jobs:
       ENVIRONMENT: prod
       TF_CLOUD_PROJECT: ByItsCover_PROD
       TF_WORKSPACE: bic-listopia-parser-prod
-      TF_VAR_hardcover_api_key: secrets.HARDCOVER_API_KEY
+      TF_VAR_hardcover_api_key: ${{ secrets.HARDCOVER_API_KEY }}
 
     steps:
       - name: Checkout repository
