@@ -71,6 +71,15 @@ resource "aws_batch_compute_environment" "spot" {
   type         = "MANAGED"
 }
 
+resource "aws_ecs_cluster" "spot" {
+  name = basename(aws_batch_compute_environment.spot.ecs_cluster_arn)
+  
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+
 resource "aws_batch_job_queue" "queue" {
   name     = "queue"
   state    = "ENABLED"
@@ -114,11 +123,22 @@ resource "aws_batch_job_definition" "job" {
     environment = [
       {
         name  = "ASPNETCORE_ENVIRONMENT"
-        value = "Production"
+        value = var.dotnet_env
       },
       {
         name  = "PGVECTOR_CONN"
         value = local.rds_connection_str
+      },
+      {
+        name  = "AWS_REGION"
+        value = var.aws_region
+      }
+    ]
+
+    secrets = [
+      {
+        name      = "HardcoverOptions__Token"
+        valueFrom = aws_secretsmanager_secret_version.api_key.arn
       }
     ]
   })

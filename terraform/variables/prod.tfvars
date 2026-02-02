@@ -4,7 +4,7 @@ bic_infra_workspace = "bic-infra-prod"
 
 # Batch
 
-dotnet_environment = "Production"
+dotnet_env = "Production"
 
 # RDS
 rds_host_port     = 5432

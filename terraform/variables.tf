@@ -20,9 +20,15 @@ variable "bic_infra_workspace" {
 
 # Batch
 
-variable "dotnet_environment" {
+variable "dotnet_env" {
   type        = string
   description = "The ASPNETCORE_ENVIRONMENT for the AWS batch container"
+}
+
+variable "hardcover_api_key" {
+  type        = string
+  description = "The Hardcover API Key"
+  sensitive = true
 }
 
 # RDS

@@ -10,7 +10,7 @@ namespace ListopiaParser;
 
 public class ListopiaParserRunner : BackgroundService
 {
-    IHostApplicationLifetime _lifetime;
+    private readonly IHostApplicationLifetime _lifetime;
     private readonly IListopiaService _listopiaService;
     private readonly IHardcoverService _hardcoverService;
     private readonly IEmbedService _embedService;
@@ -76,19 +76,19 @@ public class ListopiaParserRunner : BackgroundService
             }
 
             var embeddingsUploaded = 0;
-            await foreach (var embedTask in Task.WhenEach(embedTaskList).WithCancellation(cancellationToken))
-            {
-                try
-                {
-                    var covers = (await embedTask).ToList();
-                    await collection.UpsertAsync(covers, cancellationToken);
-                    embeddingsUploaded += covers.Count(x => x.Embedding != null);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error: {Message}", e.Message);
-                }
-            }
+            // await foreach (var embedTask in Task.WhenEach(embedTaskList).WithCancellation(cancellationToken))
+            // {
+            //     try
+            //     {
+            //         var covers = (await embedTask).ToList();
+            //         await collection.UpsertAsync(covers, cancellationToken);
+            //         embeddingsUploaded += covers.Count(x => x.Embedding != null);
+            //     }
+            //     catch (Exception e)
+            //     {
+            //         _logger.LogError(e, "Error: {Message}", e.Message);
+            //     }
+            // }
 
             _logger.LogInformation("Number of embeddings uploaded: {Count}", embeddingsUploaded);
         }
