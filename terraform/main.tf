@@ -123,11 +123,22 @@ resource "aws_batch_job_definition" "job" {
     environment = [
       {
         name  = "ASPNETCORE_ENVIRONMENT"
-        value = "Production"
+        value = var.dotnet_env
       },
       {
         name  = "PGVECTOR_CONN"
         value = local.rds_connection_str
+      },
+      {
+        name  = "AWS_REGION"
+        value = var.aws_region
+      }
+    ]
+
+    secrets = [
+      {
+        name      = "HardcoverOptions__Token"
+        valueFrom = aws_secretsmanager_secret_version.api_key.arn
       }
     ]
   })
