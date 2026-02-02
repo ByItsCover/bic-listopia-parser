@@ -33,11 +33,12 @@ builder.Services.AddSingleton<NpgsqlDataSource>(_ =>
 });
 builder.Services.AddPostgresVectorStore();
 
+builder.Services.AddSingleton<AWSCredentials>(_ => FallbackCredentialsFactory.GetCredentials());
 builder.Services.AddTransient<AwsSignatureHandler>()
-    .AddTransient(_ =>
+    .AddTransient(sp =>
     {
-        var credentials = FallbackCredentialsFactory.GetCredentials();
-        var immutableCreds = credentials.GetCredentials();
+        var credProvider = sp.GetRequiredService<AWSCredentials>();
+        var immutableCreds = credProvider.GetCredentials();
         return new AwsSignatureHandlerSettings(
             awsRegion,
             "execute-api",
