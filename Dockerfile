@@ -1,6 +1,7 @@
 # Build Stage
 
-FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG DOTNET_VERSION=9.0
+FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-alpine AS build
 ARG TARGETARCH
 
 WORKDIR /build_dir
@@ -21,7 +22,7 @@ RUN dotnet publish "src/ListopiaParser/ListopiaParser.csproj" -c Release -o /pub
 
 # Deploy Stage
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS deploy
+FROM mcr.microsoft.com/dotnet/runtime:${DOTNET_VERSION}-alpine AS deploy
 
 WORKDIR /app
 COPY --from=publish /publish .
