@@ -1,4 +1,5 @@
 ﻿using Amazon.Runtime;
+using Amazon.SQS;
 using AwsSignatureVersion4;
 using ListopiaParser;
 using ListopiaParser.Configs;
@@ -66,6 +67,7 @@ builder.Services.Configure<ListopiaOptions>(builder.Configuration.GetSection("Li
 builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("HardcoverOptions"));
 builder.Services.Configure<EmbedOptions>(builder.Configuration.GetSection("EmbedOptions"));
 builder.Services.Configure<PgVectorOptions>(builder.Configuration.GetSection("PgVectorOptions"));
+builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddHttpClient<IListopiaService, ListopiaService>();
 builder.Services.AddHttpClient<IHardcoverService, HardcoverService>();
 var embedClientBuilder = builder.Services.AddHttpClient<IEmbedService, EmbedService>();

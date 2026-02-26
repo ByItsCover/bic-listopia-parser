@@ -43,7 +43,8 @@ public class ListopiaParserRunnerTests
         _pgVectorOptionValues = new PgVectorOptions
         {
             VectorDimensions = 512,
-            CollectionName = "covers_scraped"
+            CollectionName = "covers_scraped",
+            SQSUrl = "https://sqs.us-east-1.amazonaws.com/123456/queue"
         };
         _listopiaOptions = Options.Create(_listopiaOptionValues);
         _pgVectorOptions = Options.Create(_pgVectorOptionValues);

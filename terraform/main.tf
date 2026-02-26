@@ -4,6 +4,7 @@ locals {
   ecs_instance_role_arn  = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
   batch_sg_id            = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
+  sqs_url = data.terraform_remote_state.bic_infra.outputs.sqs_url
 
   rds_connection_str = join("", [
     "Host=${data.terraform_remote_state.bic_infra.outputs.db_endpoint};",
@@ -124,6 +125,10 @@ resource "aws_batch_job_definition" "job" {
         name  = "PGVECTOR_CONN"
         value = local.rds_connection_str
       },
+      {
+        name = "SQS_URL"
+        value = local.sqs_url
+      }
       {
         name  = "AWS_REGION"
         value = var.aws_region
