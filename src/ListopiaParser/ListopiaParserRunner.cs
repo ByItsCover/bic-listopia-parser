@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using ListopiaParser.ResponseTypes;
@@ -15,12 +18,14 @@ public class ListopiaParserRunner : BackgroundService
     private readonly IHardcoverService _hardcoverService;
     private readonly IEmbedService _embedService;
     private readonly PostgresVectorStore _vectorStore;
+    private readonly IAmazonSQS _sqsClient;
     private readonly ListopiaOptions _listopiaOptions;
     private readonly PgVectorOptions _pgVectorOptions;
     private readonly ILogger<ListopiaParserRunner> _logger;
 
     public ListopiaParserRunner(IHostApplicationLifetime lifetime, IListopiaService listopiaService,
         IHardcoverService hardcoverService, IEmbedService embedService, PostgresVectorStore vectorStore,
+        IAmazonSQS sqsClient,
         IOptions<ListopiaOptions> listopiaOptions, IOptions<PgVectorOptions> pgVectorOptions,
         ILogger<ListopiaParserRunner> logger)
     {
@@ -29,6 +34,7 @@ public class ListopiaParserRunner : BackgroundService
         _hardcoverService = hardcoverService;
         _embedService = embedService;
         _vectorStore = vectorStore;
+        _sqsClient = sqsClient;
         _listopiaOptions = listopiaOptions.Value;
         _pgVectorOptions = pgVectorOptions.Value;
         _logger = logger;
@@ -40,12 +46,12 @@ public class ListopiaParserRunner : BackgroundService
 
         try
         {
-            var collection = _vectorStore.GetCollection<int, Cover>(_pgVectorOptions.CollectionName);
-            await collection.EnsureCollectionExistsAsync(cancellationToken);
+            // var collection = _vectorStore.GetCollection<int, Cover>(_pgVectorOptions.CollectionName);
+            // await collection.EnsureCollectionExistsAsync(cancellationToken);
 
             var pages = Enumerable.Range(1, _listopiaOptions.Pages);
             var hardcoverTaskList = new List<Task<List<Edition>>>();
-            var embedTaskList = new List<Task<IEnumerable<Cover>>>();
+            // var embedTaskList = new List<Task<IEnumerable<Cover>>>();
 
             var isbnsTaskList = pages.Select(x => _listopiaService.GetListopiaIsbns(x, cancellationToken));
 
@@ -62,12 +68,24 @@ public class ListopiaParserRunner : BackgroundService
                 }
             }
 
+            var embeddingsUploaded = 0;
             await foreach (var hardcoverTask in Task.WhenEach(hardcoverTaskList).WithCancellation(cancellationToken))
             {
                 try
                 {
-                    var coverEmbeddingsTask = _embedService.GetCoverEmbeddings(await hardcoverTask, cancellationToken);
-                    embedTaskList.Add(coverEmbeddingsTask);
+                    var messages = (await hardcoverTask).Select(x => new SendMessageBatchRequestEntry
+                    {
+                        Id = $"{x.Id}-{x.Isbn13}",
+                        MessageBody = JsonSerializer.Serialize(x)
+                    }).ToList();
+                    var batchRequest = new SendMessageBatchRequest
+                    {
+                        QueueUrl = _pgVectorOptions.SQSUrl,
+                        Entries = messages
+                    };
+                    
+                    var batchResponse = await _sqsClient.SendMessageBatchAsync(batchRequest, cancellationToken);
+                    embeddingsUploaded += batchResponse.Successful.Count;
                 }
                 catch (Exception e)
                 {
@@ -75,20 +93,20 @@ public class ListopiaParserRunner : BackgroundService
                 }
             }
 
-            var embeddingsUploaded = 0;
-            await foreach (var embedTask in Task.WhenEach(embedTaskList).WithCancellation(cancellationToken))
-            {
-                try
-                {
-                    var covers = (await embedTask).ToList();
-                    await collection.UpsertAsync(covers, cancellationToken);
-                    embeddingsUploaded += covers.Count(x => x.Embedding != null);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error: {Message}", e.Message);
-                }
-            }
+            
+            // await foreach (var embedTask in Task.WhenEach(embedTaskList).WithCancellation(cancellationToken))
+            // {
+            //     try
+            //     {
+            //         var covers = (await embedTask).ToList();
+            //         await collection.UpsertAsync(covers, cancellationToken);
+            //         embeddingsUploaded += covers.Count(x => x.Embedding != null);
+            //     }
+            //     catch (Exception e)
+            //     {
+            //         _logger.LogError(e, "Error: {Message}", e.Message);
+            //     }
+            // }
 
             _logger.LogInformation("Number of embeddings uploaded: {Count}", embeddingsUploaded);
         }
