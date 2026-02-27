@@ -126,7 +126,7 @@ resource "aws_batch_job_definition" "job" {
         value = local.rds_connection_str
       },
       {
-        name = "SQS_URL"
+        name = "PgVectorOptions__SQS_URL"
         value = local.sqs_url
       },
       {
