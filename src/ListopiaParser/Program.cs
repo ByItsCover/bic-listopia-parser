@@ -1,4 +1,5 @@
 ﻿using Amazon.Runtime;
+using Amazon.Runtime.Credentials;
 using Amazon.SQS;
 using AwsSignatureVersion4;
 using ListopiaParser;
@@ -50,7 +51,7 @@ builder.Services.AddPostgresVectorStore();
 
 if (!builder.Environment.IsDevelopment())
 {
-    builder.Services.AddSingleton<AWSCredentials>(_ => FallbackCredentialsFactory.GetCredentials());
+    builder.Services.AddSingleton<AWSCredentials>(_ => DefaultAWSCredentialsIdentityResolver.GetCredentials());
     builder.Services.AddTransient<AwsSignatureHandler>()
         .AddTransient(sp =>
         {
