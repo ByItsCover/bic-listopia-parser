@@ -128,7 +128,7 @@ resource "aws_batch_job_definition" "job" {
       {
         name = "SQS_URL"
         value = local.sqs_url
-      }
+      },
       {
         name  = "AWS_REGION"
         value = var.aws_region
