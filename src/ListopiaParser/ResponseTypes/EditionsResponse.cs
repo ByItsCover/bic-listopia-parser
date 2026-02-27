@@ -9,16 +9,13 @@ public class EditionsResponse
 
 public class Edition
 {
-    [JsonPropertyName("id")]
     public required int Id  { get; init; }
     [JsonPropertyName("isbn_13")]
     public required string Isbn13  { get; init; }
-    [JsonPropertyName("image")]
     public required EditionImage? Image { get; init; }
 }
 
 public class EditionImage
 {
-    [JsonPropertyName("url")]
     public required string Url { get; init; }
 }

@@ -81,7 +81,20 @@ public class ListopiaParserRunner : BackgroundService
                         var messages = chunk.Select(x => new SendMessageBatchRequestEntry
                         {
                             Id = $"{x.Id}-{x.Isbn13}",
-                            MessageBody = JsonSerializer.Serialize(x)
+                            MessageBody = x.Image?.Url,
+                            MessageAttributes = new Dictionary<string, MessageAttributeValue>
+                            {
+                                {"cover_id", new MessageAttributeValue
+                                {
+                                    DataType = "Number",
+                                    StringValue = x.Id.ToString()
+                                }},
+                                {"isbn_13", new MessageAttributeValue
+                                {
+                                    DataType = "String",
+                                    StringValue = x.Isbn13
+                                }}
+                            }
                         }).ToList();
                         var batchRequest = new SendMessageBatchRequest
                         {
