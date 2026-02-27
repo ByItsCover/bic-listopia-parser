@@ -73,19 +73,31 @@ public class ListopiaParserRunner : BackgroundService
             {
                 try
                 {
-                    var messages = (await hardcoverTask).Select(x => new SendMessageBatchRequestEntry
-                    {
-                        Id = $"{x.Id}-{x.Isbn13}",
-                        MessageBody = JsonSerializer.Serialize(x)
-                    }).ToList();
-                    var batchRequest = new SendMessageBatchRequest
-                    {
-                        QueueUrl = _pgVectorOptions.SQSUrl,
-                        Entries = messages
-                    };
+                    var editionChunks = (await hardcoverTask).Chunk(Constants.SQSMessageLimit);
+                    var sqsTaskList = new List<Task<SendMessageBatchResponse>>();
                     
-                    var batchResponse = await _sqsClient.SendMessageBatchAsync(batchRequest, cancellationToken);
-                    embeddingsUploaded += batchResponse.Successful.Count;
+                    foreach (var chunk in editionChunks)
+                    {
+                        var messages = chunk.Select(x => new SendMessageBatchRequestEntry
+                        {
+                            Id = $"{x.Id}-{x.Isbn13}",
+                            MessageBody = JsonSerializer.Serialize(x)
+                        }).ToList();
+                        var batchRequest = new SendMessageBatchRequest
+                        {
+                            QueueUrl = _pgVectorOptions.SQSUrl,
+                            Entries = messages
+                        };
+                    
+                        var sqsTask = _sqsClient.SendMessageBatchAsync(batchRequest, cancellationToken);
+                        sqsTaskList.Add(sqsTask);
+                    }
+
+                    var batchResponses = await Task.WhenAll(sqsTaskList);
+                    foreach (var batchResponse in batchResponses)
+                    {
+                        embeddingsUploaded += batchResponse.Successful.Count;
+                    }
                 }
                 catch (Exception e)
                 {
