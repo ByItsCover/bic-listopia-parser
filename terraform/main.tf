@@ -4,17 +4,7 @@ locals {
   ecs_instance_role_arn  = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
   batch_sg_id            = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
-  sqs_url = data.terraform_remote_state.bic_infra.outputs.sqs_url
-
-  rds_connection_str = join("", [
-    "Host=${data.terraform_remote_state.bic_infra.outputs.db_endpoint};",
-    "Port=${var.rds_host_port};",
-    "Database=${var.rds_database_name};",
-    "Username=${data.terraform_remote_state.bic_infra.outputs.db_master_username};",
-    "Password=${data.terraform_remote_state.bic_infra.outputs.db_master_password};",
-    "Timeout=${var.rds_timeout};",
-    "CommandTimeout=${var.rds_timeout};"
-  ])
+  sqs_url                = data.terraform_remote_state.bic_infra.outputs.sqs_url
 }
 
 
@@ -108,11 +98,11 @@ resource "aws_batch_job_definition" "job" {
     resourceRequirements = [
       {
         type  = "VCPU"
-        value = "1"
+        value = tostring(var.batch_vcpu)
       },
       {
         type  = "MEMORY"
-        value = "2048"
+        value = tostring(var.batch_memory)
       }
     ]
 
@@ -122,11 +112,7 @@ resource "aws_batch_job_definition" "job" {
         value = var.dotnet_env
       },
       {
-        name  = "PGVECTOR_CONN"
-        value = local.rds_connection_str
-      },
-      {
-        name = "PgVectorOptions__SQS_URL"
+        name  = "ListopiaOptions__SqsUrl"
         value = local.sqs_url
       },
       {
