@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using ListopiaParser.Configs;
@@ -7,7 +6,6 @@ using ListopiaParser.ResponseTypes;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel.Connectors.PgVector;
 
 namespace ListopiaParser;
 
@@ -16,27 +14,19 @@ public class ListopiaParserRunner : BackgroundService
     private readonly IHostApplicationLifetime _lifetime;
     private readonly IListopiaService _listopiaService;
     private readonly IHardcoverService _hardcoverService;
-    private readonly IEmbedService _embedService;
-    private readonly PostgresVectorStore _vectorStore;
     private readonly IAmazonSQS _sqsClient;
     private readonly ListopiaOptions _listopiaOptions;
-    private readonly PgVectorOptions _pgVectorOptions;
     private readonly ILogger<ListopiaParserRunner> _logger;
 
     public ListopiaParserRunner(IHostApplicationLifetime lifetime, IListopiaService listopiaService,
-        IHardcoverService hardcoverService, IEmbedService embedService, PostgresVectorStore vectorStore,
-        IAmazonSQS sqsClient,
-        IOptions<ListopiaOptions> listopiaOptions, IOptions<PgVectorOptions> pgVectorOptions,
+        IHardcoverService hardcoverService, IAmazonSQS sqsClient, IOptions<ListopiaOptions> listopiaOptions,
         ILogger<ListopiaParserRunner> logger)
     {
         _lifetime = lifetime;
         _listopiaService = listopiaService;
         _hardcoverService = hardcoverService;
-        _embedService = embedService;
-        _vectorStore = vectorStore;
         _sqsClient = sqsClient;
         _listopiaOptions = listopiaOptions.Value;
-        _pgVectorOptions = pgVectorOptions.Value;
         _logger = logger;
     }
     
@@ -46,12 +36,8 @@ public class ListopiaParserRunner : BackgroundService
 
         try
         {
-            // var collection = _vectorStore.GetCollection<int, Cover>(_pgVectorOptions.CollectionName);
-            // await collection.EnsureCollectionExistsAsync(cancellationToken);
-
             var pages = Enumerable.Range(1, _listopiaOptions.Pages);
             var hardcoverTaskList = new List<Task<List<Edition>>>();
-            // var embedTaskList = new List<Task<IEnumerable<Cover>>>();
 
             var isbnsTaskList = pages.Select(x => _listopiaService.GetListopiaIsbns(x, cancellationToken));
 
@@ -73,7 +59,7 @@ public class ListopiaParserRunner : BackgroundService
             {
                 try
                 {
-                    var editionChunks = (await hardcoverTask).Chunk(Constants.SQSMessageLimit);
+                    var editionChunks = (await hardcoverTask).Chunk(Constants.SqsMessageLimit);
                     var sqsTaskList = new List<Task<SendMessageBatchResponse>>();
                     
                     foreach (var chunk in editionChunks)
@@ -98,7 +84,7 @@ public class ListopiaParserRunner : BackgroundService
                         }).ToList();
                         var batchRequest = new SendMessageBatchRequest
                         {
-                            QueueUrl = _pgVectorOptions.SQSUrl,
+                            QueueUrl = _listopiaOptions.SqsUrl,
                             Entries = messages
                         };
                     
@@ -117,21 +103,6 @@ public class ListopiaParserRunner : BackgroundService
                     _logger.LogError(e, "Error: {Message}", e.Message);
                 }
             }
-
-            
-            // await foreach (var embedTask in Task.WhenEach(embedTaskList).WithCancellation(cancellationToken))
-            // {
-            //     try
-            //     {
-            //         var covers = (await embedTask).ToList();
-            //         await collection.UpsertAsync(covers, cancellationToken);
-            //         embeddingsUploaded += covers.Count(x => x.Embedding != null);
-            //     }
-            //     catch (Exception e)
-            //     {
-            //         _logger.LogError(e, "Error: {Message}", e.Message);
-            //     }
-            // }
 
             _logger.LogInformation("Number of embeddings uploaded: {Count}", embeddingsUploaded);
         }

@@ -1,3 +1,5 @@
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using ListopiaParser.ResponseTypes;
@@ -6,8 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace ListopiaParser.Tests;
 
@@ -16,66 +16,52 @@ public class ListopiaParserRunnerTests
     private Mock<IHostApplicationLifetime> _lifetimeMock;
     private Mock<IListopiaService> _listopiaServiceMock;
     private Mock<IHardcoverService> _hardcoverServiceMock;
-    private Mock<IEmbedService> _embedServiceMock;
-    private PostgreSqlContainer _pgVectorContainer;
+    private Mock<IAmazonSQS> _sqsClientMock;
     private IOptions<ListopiaOptions> _listopiaOptions;
-    private IOptions<PgVectorOptions> _pgVectorOptions;
     private ListopiaOptions _listopiaOptionValues;
-    private PgVectorOptions _pgVectorOptionValues;
     private Mock<ILogger<ListopiaParserRunner>> _loggerMock;
     private IServiceCollection _services;
     private IHostedService? _sut;
     
+    private const int PageSize = 52;
+    
     [SetUp]
-    public async Task Setup()
+    public void Setup()
     {
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
         _listopiaServiceMock = new Mock<IListopiaService>();
         _hardcoverServiceMock = new Mock<IHardcoverService>();
-        _embedServiceMock = new Mock<IEmbedService>();
+        _sqsClientMock = new Mock<IAmazonSQS>();
         _loggerMock = new Mock<ILogger<ListopiaParserRunner>>();
         _listopiaOptionValues = new ListopiaOptions
         {
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
+            SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
             Pages = 10
         };
-        _pgVectorOptionValues = new PgVectorOptions
-        {
-            VectorDimensions = 512,
-            CollectionName = "covers_scraped",
-            SQSUrl = "https://sqs.us-east-1.amazonaws.com/123456/queue"
-        };
         _listopiaOptions = Options.Create(_listopiaOptionValues);
-        _pgVectorOptions = Options.Create(_pgVectorOptionValues);
 
-        _pgVectorContainer = new PostgreSqlBuilder()
-            .WithImage("pgvector/pgvector:pg16")
-            .Build();
-        await _pgVectorContainer.StartAsync();
+        _hardcoverServiceMock
+            .Setup(x => x.GetBookEditions(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Enumerable.Repeat(new Edition
+            {
+                Id = 1,
+                Isbn13 = "abc123",
+                Image = new EditionImage
+                {
+                    Url = "https://www.goodreads.com/my-image"
+                }
+            }, PageSize).ToList());
         
         _services = new ServiceCollection();
-        
-        _services.AddSingleton<NpgsqlDataSource>(_ =>
-        {
-            NpgsqlDataSourceBuilder dataSourceBuilder = new(_pgVectorContainer.GetConnectionString());
-            dataSourceBuilder.UseVector();
-            var datasource = dataSourceBuilder.Build();
-        
-            var conn = datasource.OpenConnection();
-            using var cmd = new NpgsqlCommand("CREATE EXTENSION IF NOT EXISTS vector", conn);
-            cmd.ExecuteNonQuery();
-            return datasource;
-        });
-        _services.AddPostgresVectorStore();
         
         _services.AddSingleton<IHostedService, ListopiaParserRunner>();
         _services.AddSingleton(_lifetimeMock.Object);
         _services.AddSingleton(_listopiaServiceMock.Object);
         _services.AddSingleton(_hardcoverServiceMock.Object);
-        _services.AddSingleton(_embedServiceMock.Object);
+        _services.AddSingleton(_sqsClientMock.Object);
         _services.AddSingleton(_listopiaOptions);
-        _services.AddSingleton(_pgVectorOptions);
         _services.AddSingleton(_loggerMock.Object);
         
         var serviceProvider = _services.BuildServiceProvider();
@@ -85,6 +71,8 @@ public class ListopiaParserRunnerTests
     [Test]
     public async Task TestExecuteAsync()
     {
+        var expectedSqsCalls = (int) Math.Ceiling(PageSize / (double)Constants.SqsMessageLimit) * _listopiaOptionValues.Pages;
+        
         Assert.That(_sut, Is.Not.Null);
         
         await _sut.StartAsync(CancellationToken.None);
@@ -103,16 +91,10 @@ public class ListopiaParserRunnerTests
                 It.IsAny<CancellationToken>()
             ), 
             Times.Exactly(_listopiaOptionValues.Pages));
-        _embedServiceMock.Verify(x => x.GetCoverEmbeddings(
-                It.IsAny<List<Edition>>(),
+        _sqsClientMock.Verify(x => x.SendMessageBatchAsync(
+                It.IsAny<SendMessageBatchRequest>(),
                 It.IsAny<CancellationToken>()
             ), 
-            Times.Exactly(_listopiaOptionValues.Pages));
-    }
-
-    [TearDown]
-    public async Task TearDown()
-    {
-        await _pgVectorContainer.DisposeAsync();
+            Times.Exactly(expectedSqsCalls));
     }
 }

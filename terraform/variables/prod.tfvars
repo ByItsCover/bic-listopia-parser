@@ -6,9 +6,5 @@ bic_infra_workspace = "bic-infra-prod"
 
 dotnet_env   = "Production"
 max_duration = 1800
-
-# RDS
-rds_host_port     = 5432
-rds_database_name = "coverdb"
-rds_timeout       = 60
-
+batch_vcpu   = 1
+batch_memory = 512

@@ -37,21 +37,14 @@ variable "max_duration" {
   default     = 3600
 }
 
-# RDS
-
-variable "rds_host_port" {
+variable "batch_vcpu" {
   type        = number
-  description = "Port of the RDS database host"
-  default     = 5432
+  description = "VCPU count for batch job"
+  default     = 1
 }
 
-variable "rds_database_name" {
-  type        = string
-  description = "RDS database name"
-}
-
-variable "rds_timeout" {
+variable "batch_memory" {
   type        = number
-  description = "Timeout for RDS database connection establishment"
-  default     = 30
+  description = "Memory size for batch job"
+  default     = 512
 }
