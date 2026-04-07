@@ -7,4 +7,4 @@ bic_infra_workspace = "bic-infra-prod"
 dotnet_env   = "Production"
 max_duration = 1800
 batch_vcpu   = 1
-batch_memory = 1024
+batch_memory = 2048
