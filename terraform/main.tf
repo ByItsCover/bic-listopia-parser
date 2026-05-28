@@ -5,6 +5,7 @@ locals {
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
   batch_sg_id            = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
   sqs_url                = data.terraform_remote_state.bic_infra.outputs.sqs_url
+  hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
 }
 
 
@@ -124,7 +125,7 @@ resource "aws_batch_job_definition" "job" {
     secrets = [
       {
         name      = "HardcoverOptions__Token"
-        valueFrom = aws_secretsmanager_secret_version.api_key.arn
+        valueFrom = local.hardcover_secret_arn
       }
     ]
   })

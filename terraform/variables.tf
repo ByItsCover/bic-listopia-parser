@@ -25,12 +25,6 @@ variable "dotnet_env" {
   description = "The ASPNETCORE_ENVIRONMENT for the AWS batch container"
 }
 
-variable "hardcover_api_key" {
-  type        = string
-  description = "The Hardcover API Key"
-  sensitive   = true
-}
-
 variable "max_duration" {
   type        = number
   description = "Maximum duration for batch task, after which will be terminated"
