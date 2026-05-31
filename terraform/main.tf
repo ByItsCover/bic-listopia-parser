@@ -8,6 +8,11 @@ locals {
   hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
 }
 
+import {
+  to = aws_ecs_cluster.spot_cluster
+  id = split("/", aws_batch_compute_environment.spot.ecs_cluster_arn)[1]
+}
+
 
 data "aws_ssm_parameter" "image_id" {
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id"
@@ -63,6 +68,15 @@ resource "aws_batch_compute_environment" "spot" {
 
   service_role = local.batch_role_arn
   type         = "MANAGED"
+}
+
+resource "aws_ecs_cluster" "spot_cluster" {
+  name = split("/", aws_batch_compute_environment.spot.ecs_cluster_arn)[1]
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_batch_job_queue" "queue" {
