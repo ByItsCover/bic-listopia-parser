@@ -31,6 +31,11 @@ on:
         required: true
         default: 10
         type: number
+      maxParallelCount:
+        description: 'Maximum number of scraping calls to run in parallel'
+        required: true
+        default: 2
+        type: number
 
 permissions:
   id-token: write
@@ -67,6 +72,10 @@ jobs:
                   {
                     "name": "ListopiaOptions__Pages",
                     "value": "${{ inputs.pageCount }}"
+                  },
+                  {
+                    "name": "ListopiaOptions__MaxParallelCount",
+                    "value": "${{ inputs.maxParallelCount }}"
                   }
                 ]
               }'

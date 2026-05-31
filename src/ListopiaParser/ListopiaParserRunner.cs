@@ -2,7 +2,6 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
-using ListopiaParser.ResponseTypes;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,34 +32,25 @@ public class ListopiaParserRunner : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Listopia Parser starting...");
+        var options = new ParallelOptions()
+        {
+            MaxDegreeOfParallelism = _listopiaOptions.MaxParallelCount,
+            CancellationToken = cancellationToken
+        };
 
         try
         {
-            var pages = Enumerable.Range(1, _listopiaOptions.Pages);
-            var hardcoverTaskList = new List<Task<List<Edition>>>();
-
-            var isbnsTaskList = pages.Select(x => _listopiaService.GetListopiaIsbns(x, cancellationToken));
-
-            await foreach (var isbnsTask in Task.WhenEach(isbnsTaskList).WithCancellation(cancellationToken))
-            {
-                try
-                {
-                    var editionsTask = _hardcoverService.GetBookEditions(await isbnsTask, cancellationToken);
-                    hardcoverTaskList.Add(editionsTask);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error: {Message}", e.Message);
-                }
-            }
-
+            var pages = Enumerable.Range(1, _listopiaOptions.Pages).ToList();
             var embeddingsUploaded = 0;
-            await foreach (var hardcoverTask in Task.WhenEach(hardcoverTaskList).WithCancellation(cancellationToken))
+            
+            await Parallel.ForEachAsync(pages, options, async (page, token) =>
             {
+                var isbnList = await _listopiaService.GetListopiaIsbns(page, token);
+                var editions = await _hardcoverService.GetBookEditions(isbnList, token);
+                
                 try
                 {
-                    var editionChunks = (await hardcoverTask).Chunk(Constants.SqsMessageLimit);
-                    var sqsTaskList = new List<Task<SendMessageBatchResponse>>();
+                    var editionChunks = editions.Chunk(Constants.SqsMessageLimit).ToList();
                     
                     foreach (var chunk in editionChunks)
                     {
@@ -93,13 +83,7 @@ public class ListopiaParserRunner : BackgroundService
                             Entries = messages
                         };
                     
-                        var sqsTask = _sqsClient.SendMessageBatchAsync(batchRequest, cancellationToken);
-                        sqsTaskList.Add(sqsTask);
-                    }
-
-                    var batchResponses = await Task.WhenAll(sqsTaskList);
-                    foreach (var batchResponse in batchResponses)
-                    {
+                        var batchResponse = await _sqsClient.SendMessageBatchAsync(batchRequest, token);
                         embeddingsUploaded += batchResponse.Successful.Count;
                     }
                 }
@@ -107,7 +91,7 @@ public class ListopiaParserRunner : BackgroundService
                 {
                     _logger.LogError(e, "Error: {Message}", e.Message);
                 }
-            }
+            });
 
             _logger.LogInformation("Number of embeddings uploaded: {Count}", embeddingsUploaded);
         }
