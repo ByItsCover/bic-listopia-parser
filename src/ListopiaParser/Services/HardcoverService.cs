@@ -36,6 +36,7 @@ public class HardcoverService : IHardcoverService
                         editions(where: { isbn_13: { _in: $isbn_list } }) {
                             id
                             isbn_13
+                            book_id
                             image {
                                 url
                             }

@@ -24,7 +24,8 @@ public class ListopiaServiceTests
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
             SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
-            Pages = 10
+            Pages = 10,
+            MaxParallelCount = 2
         };
         _options = Options.Create(_optionValues);
         _mockHttp = new MockHttpMessageHandler();

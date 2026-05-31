@@ -42,11 +42,12 @@ public class HardcoverServiceTests
             new()
             {
                 Id = 1,
-                Image = new EditionImage
+                Image = new EditionImage()
                 {
                     Url = "https://www.randomsite.com/test.png"
                 },
-                Isbn13 = "1111111111111"
+                Isbn13 = "1111111111111",
+                BookId = 10
             }
         };
         var expectedRequest = _mockHttp.Expect(_optionValues.HardcoverUrl)
@@ -58,6 +59,7 @@ public class HardcoverServiceTests
                             editions(where: { isbn_13: { _in: $isbn_list } }) {
                                 id
                                 isbn_13
+                                book_id
                                 image {
                                     url
                                 }
@@ -79,6 +81,7 @@ public class HardcoverServiceTests
                              {
                                  "id": 1,
                                  "isbn_13": "1111111111111",
+                                 "book_id": 10,
                                  "asin": null,
                                  "image": {
                                      "url": "https://www.randomsite.com/test.png"

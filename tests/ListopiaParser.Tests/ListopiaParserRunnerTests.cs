@@ -38,7 +38,8 @@ public class ListopiaParserRunnerTests
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
             SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
-            Pages = 10
+            Pages = 10,
+            MaxParallelCount = 2
         };
         _listopiaOptions = Options.Create(_listopiaOptionValues);
 
@@ -48,11 +49,18 @@ public class ListopiaParserRunnerTests
             {
                 Id = 1,
                 Isbn13 = "abc123",
+                BookId = 10,
                 Image = new EditionImage
                 {
                     Url = "https://www.goodreads.com/my-image"
                 }
             }, PageSize).ToList());
+        _sqsClientMock
+            .Setup(x => x.SendMessageBatchAsync(It.IsAny<SendMessageBatchRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SendMessageBatchResponse()
+            {
+                Successful = new List<SendMessageBatchResultEntry>()
+            });
         
         _services = new ServiceCollection();
         
