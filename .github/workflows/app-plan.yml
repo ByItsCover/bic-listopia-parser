@@ -1,4 +1,4 @@
-name: terraform-plan
+name: app-plan
 
 on:
   workflow_dispatch:
@@ -13,9 +13,6 @@ jobs:
   run-tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
-
-    outputs:
-      test_passed: ${{ steps.test.outputs.test_status }}
 
     steps:
       - name: Checkout repository
@@ -34,15 +31,12 @@ jobs:
 
       - name: Test with the dotnet CLI
         id: test
-        run: |
-          trap 'echo "test_status=$?" >> "$GITHUB_OUTPUT"' EXIT
-          dotnet test --no-build
+        run: dotnet test --no-build
 
-  plan:
+  tf-plan:
     name: Terraform plan
     runs-on: ubuntu-latest
     needs: run-tests
-    if: needs.run-tests.outputs.test_passed == 'true'
 
     permissions:
       contents: write
