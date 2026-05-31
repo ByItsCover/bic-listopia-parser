@@ -48,6 +48,7 @@ public class ListopiaParserRunnerTests
             {
                 Id = 1,
                 Isbn13 = "abc123",
+                BookId = 10,
                 Image = new EditionImage
                 {
                     Url = "https://www.goodreads.com/my-image"

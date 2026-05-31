@@ -75,6 +75,11 @@ public class ListopiaParserRunner : BackgroundService
                                     DataType = "Number",
                                     StringValue = x.Id.ToString()
                                 }},
+                                {"book_id", new MessageAttributeValue
+                                {
+                                    DataType = "Number",
+                                    StringValue = x.BookId.ToString()
+                                }},
                                 {"isbn_13", new MessageAttributeValue
                                 {
                                     DataType = "String",
