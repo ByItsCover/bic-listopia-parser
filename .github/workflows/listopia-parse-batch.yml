@@ -26,8 +26,13 @@ on:
         required: true
         default: 'https://www.goodreads.com/list/show/4581.Judge_A_Book_By_Its_Cover_'
         type: string
+      pageStart:
+        description: 'The page number for Listopia parser to start on'
+        required: true
+        default: 1
+        type: number
       pageCount:
-        description: 'Number of Listopia Pages to Scrape'
+        description: 'Number of Listopia pages to Scrape'
         required: true
         default: 10
         type: number
@@ -70,7 +75,11 @@ jobs:
                     "value": "${{ inputs.listopiaUrl }}"
                   },
                   {
-                    "name": "ListopiaOptions__Pages",
+                    "name": "ListopiaOptions__PageStart",
+                    "value": "${{ inputs.pageStart }}"
+                  },
+                  {
+                    "name": "ListopiaOptions__PageCount",
                     "value": "${{ inputs.pageCount }}"
                   },
                   {

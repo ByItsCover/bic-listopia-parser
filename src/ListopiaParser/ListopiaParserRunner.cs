@@ -40,7 +40,7 @@ public class ListopiaParserRunner : BackgroundService
 
         try
         {
-            var pages = Enumerable.Range(1, _listopiaOptions.Pages).ToList();
+            var pages = Enumerable.Range(_listopiaOptions.PageStart, _listopiaOptions.PageCount).ToList();
             var embeddingsUploaded = 0;
             
             await Parallel.ForEachAsync(pages, options, async (page, token) =>

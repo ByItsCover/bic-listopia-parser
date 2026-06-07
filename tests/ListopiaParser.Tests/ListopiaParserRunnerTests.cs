@@ -38,7 +38,8 @@ public class ListopiaParserRunnerTests
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
             SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
-            Pages = 10,
+            PageStart = 1,
+            PageCount = 10,
             MaxParallelCount = 2
         };
         _listopiaOptions = Options.Create(_listopiaOptionValues);
@@ -79,7 +80,7 @@ public class ListopiaParserRunnerTests
     [Test]
     public async Task TestExecuteAsync()
     {
-        var expectedSqsCalls = (int) Math.Ceiling(PageSize / (double)Constants.SqsMessageLimit) * _listopiaOptionValues.Pages;
+        var expectedSqsCalls = (int) Math.Ceiling(PageSize / (double)Constants.SqsMessageLimit) * _listopiaOptionValues.PageCount;
         
         Assert.That(_sut, Is.Not.Null);
         
@@ -90,15 +91,15 @@ public class ListopiaParserRunnerTests
         _lifetimeMock.Verify(x => x.StopApplication(),
             Times.Once);
         _listopiaServiceMock.Verify(x => x.GetListopiaIsbns(
-            It.IsInRange(1, _listopiaOptionValues.Pages, Moq.Range.Inclusive),
+            It.IsInRange(_listopiaOptionValues.PageStart, _listopiaOptionValues.PageStart + _listopiaOptionValues.PageCount - 1, Moq.Range.Inclusive),
             It.IsAny<CancellationToken>()
             ), 
-            Times.Exactly(_listopiaOptionValues.Pages));
+            Times.Exactly(_listopiaOptionValues.PageCount));
         _hardcoverServiceMock.Verify(x => x.GetBookEditions(
                 It.IsAny<List<string>>(),
                 It.IsAny<CancellationToken>()
             ), 
-            Times.Exactly(_listopiaOptionValues.Pages));
+            Times.Exactly(_listopiaOptionValues.PageCount));
         _sqsClientMock.Verify(x => x.SendMessageBatchAsync(
                 It.IsAny<SendMessageBatchRequest>(),
                 It.IsAny<CancellationToken>()
