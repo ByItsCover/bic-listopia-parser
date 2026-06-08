@@ -80,14 +80,17 @@ public class ListopiaService : IListopiaService
         {
             if (property.Name.StartsWith("Book:"))
             {
-                isbn = property.Value.GetProperty("details").GetProperty("isbn13").GetString();
+                if (property.Value.TryGetProperty("details", out var details) && details.TryGetProperty("isbn13", out var isbnVal))
+                {
+                    isbn = isbnVal.GetString();
+                }
                 break;
             }
         }
         
         if (isbn == null)
         {
-            throw new ArgumentNullException(nameof(isbn), "ISBN-13 was not found");
+            throw new ArgumentNullException(nameof(isbn), $"ISBN-13 was not found for url {url}");
         }
         
         return isbn;
