@@ -83,8 +83,8 @@ public class ListopiaService : IListopiaService
                 if (property.Value.TryGetProperty("details", out var details) && details.TryGetProperty("isbn13", out var isbnVal))
                 {
                     isbn = isbnVal.GetString();
+                    break;
                 }
-                break;
             }
         }
         
