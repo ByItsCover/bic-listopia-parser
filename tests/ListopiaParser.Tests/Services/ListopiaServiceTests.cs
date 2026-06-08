@@ -268,6 +268,12 @@ public class ListopiaServiceTests
                                          "title": "{{bookName}}",
                                          "webUrl": "https://www.goodreads.com/series/some_url"
                                      },
+                                     "Book:kca://book/amzn1.gr.book.v3.some_secondary_name": {
+                                        "__typename": "Book",
+                                        "id": "kca://book/amzn1.gr.book.v3.some_secondary_name",
+                                        "legacyId": 123456,
+                                        "webUrl": "https://www.goodreads.com/book/show/some_secondary_url"
+                                     },
                                      "Book:kca://book/amzn1.gr.book.v1.some_name": {
                                          "__typename": "Book",
                                          "id": "kca://book/amzn1.gr.book.v1.some_name",
