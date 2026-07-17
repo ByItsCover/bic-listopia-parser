@@ -24,7 +24,8 @@ public class ListopiaServiceTests
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
             SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
-            Pages = 10,
+            PageStart = 1,
+            PageCount = 10,
             MaxParallelCount = 2
         };
         _options = Options.Create(_optionValues);
@@ -266,6 +267,12 @@ public class ListopiaServiceTests
                                          "id": "kca://series/amzn1.gr.series.v1.some_name",
                                          "title": "{{bookName}}",
                                          "webUrl": "https://www.goodreads.com/series/some_url"
+                                     },
+                                     "Book:kca://book/amzn1.gr.book.v3.some_secondary_name": {
+                                        "__typename": "Book",
+                                        "id": "kca://book/amzn1.gr.book.v3.some_secondary_name",
+                                        "legacyId": 123456,
+                                        "webUrl": "https://www.goodreads.com/book/show/some_secondary_url"
                                      },
                                      "Book:kca://book/amzn1.gr.book.v1.some_name": {
                                          "__typename": "Book",
