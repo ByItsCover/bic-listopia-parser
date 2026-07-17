@@ -75,7 +75,7 @@ resource "aws_ecs_cluster" "spot_cluster" {
 
   setting {
     name  = "containerInsights"
-    value = "enabled"
+    value = "enhanced"
   }
 }
 
