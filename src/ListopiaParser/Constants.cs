@@ -1,6 +1,6 @@
 namespace ListopiaParser;
 
-public class Constants
+public static class Constants
 {
     public const int SqsMessageLimit = 10;
 }
