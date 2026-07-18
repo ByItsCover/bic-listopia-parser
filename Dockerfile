@@ -1,6 +1,6 @@
 # Build Stage
 
-ARG DOTNET_VERSION=9.0
+ARG DOTNET_VERSION=10.0
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-alpine AS build
 ARG TARGETARCH
 
