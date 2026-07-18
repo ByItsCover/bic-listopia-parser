@@ -1,5 +1,5 @@
 locals {
-  ecr_repo               = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
+  ecr_repo = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
 }
 
 
