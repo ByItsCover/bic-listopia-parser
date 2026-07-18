@@ -1,3 +1,4 @@
+/*
 locals {
   ecr_repo               = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
   batch_role_arn         = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
@@ -8,99 +9,6 @@ locals {
   hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
 }
 
-import {
-  to = aws_ecs_cluster.spot_cluster
-  id = split("/", aws_batch_compute_environment.spot.ecs_cluster_arn)[1]
-}
-
-
-data "aws_ssm_parameter" "image_id" {
-  name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id"
-}
-
-resource "aws_launch_template" "batch_launch_template" {
-
-  block_device_mappings {
-    device_name = "/dev/xvda"
-
-    ebs {
-      volume_size = 50
-    }
-  }
-
-  metadata_options {
-    http_tokens                 = "required"
-    http_put_response_hop_limit = 2
-  }
-
-  image_id = data.aws_ssm_parameter.image_id.value
-}
-
-resource "aws_batch_compute_environment" "spot" {
-  name_prefix = "spot-fleet-"
-
-  compute_resources {
-    allocation_strategy = "SPOT_CAPACITY_OPTIMIZED"
-
-    instance_role = local.ecs_instance_role_arn
-    instance_type = [
-      "default_arm64"
-    ]
-
-
-    max_vcpus     = 64
-    min_vcpus     = 0
-    desired_vcpus = 0
-
-    security_group_ids = [
-      local.batch_sg_id
-    ]
-
-    subnets = data.aws_subnets.subnet.ids
-
-    type = "SPOT"
-
-    launch_template {
-      launch_template_id = aws_launch_template.batch_launch_template.id
-      version            = aws_launch_template.batch_launch_template.latest_version
-    }
-  }
-
-  service_role = local.batch_role_arn
-  type         = "MANAGED"
-}
-
-resource "aws_ecs_cluster" "spot_cluster" {
-  name = split("/", aws_batch_compute_environment.spot.ecs_cluster_arn)[1]
-
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
-
-resource "aws_batch_job_queue" "queue" {
-  name     = "queue"
-  state    = "ENABLED"
-  priority = "1"
-
-  compute_environment_order {
-    order               = 1
-    compute_environment = aws_batch_compute_environment.spot.arn
-  }
-
-  lifecycle {
-    replace_triggered_by = [
-      aws_batch_compute_environment.spot.id
-    ]
-  }
-
-}
-
-data "aws_ecr_image" "server_image" {
-  repository_name = local.ecr_repo
-  image_tag       = "latest"
-}
 
 resource "aws_batch_job_definition" "job" {
   name = "listopia_parser_batch_job_definition"
@@ -148,3 +56,4 @@ resource "aws_batch_job_definition" "job" {
     attempt_duration_seconds = var.max_duration
   }
 }
+*/

@@ -1,3 +1,8 @@
+locals {
+  ecr_repo = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
+}
+
+
 data "terraform_remote_state" "bic_infra" {
   backend = "remote"
 
@@ -9,13 +14,7 @@ data "terraform_remote_state" "bic_infra" {
   }
 }
 
-data "aws_vpc" "default" {
-  default = true
-}
-
-data "aws_subnets" "subnet" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
+data "aws_ecr_image" "server_image" {
+  repository_name = local.ecr_repo
+  image_tag       = "latest"
 }
