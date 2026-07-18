@@ -7,20 +7,6 @@ on:
         description: 'Job Name'
         required: true
         type: string
-      queue:
-        description: 'Batch Queue Name'
-        required: true
-        default: 'queue'
-        type: choice
-        options:
-        - queue
-      jobDefinition:
-        description: 'Batch Job Definition'
-        required: true
-        default: 'listopia_parser_batch_job_definition'
-        type: choice
-        options:
-        - listopia_parser_batch_job_definition
       listopiaUrl:
         description: 'Listopia URL For Scraping'
         required: true
@@ -66,8 +52,8 @@ jobs:
         run: |
           aws batch submit-job \
               --job-name ${{ inputs.jobName }}-${{ github.run_id }} \
-              --job-queue ${{ inputs.queue }} \
-              --job-definition ${{ inputs.jobDefinition }} \
+              --job-queue listopia-queue \
+              --job-definition listopia_parser_batch_job_definition \
               --container-overrides '{
                 "environment": [
                   {
