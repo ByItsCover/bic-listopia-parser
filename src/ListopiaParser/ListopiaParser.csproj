@@ -22,14 +22,14 @@
 
 
     <ItemGroup>
-      <PackageReference Include="AngleSharp" Version="1.3.1-beta.491" />
+      <PackageReference Include="AngleSharp" Version="1.5.3-beta.564" />
       <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.23" />
       <PackageReference Include="AWSSDK.SQS" Version="4.0.2.15" />
       <PackageReference Include="AwsSignatureVersion4" Version="5.2.0-beta.1" />
       <PackageReference Include="GraphQL.Client" Version="6.1.0" />
       <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-rc.1.25451.107" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0-preview.6.26359.118" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.6.26359.118" />
     </ItemGroup>
 
 </Project>
