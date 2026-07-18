@@ -1,10 +1,5 @@
-/*
 locals {
-  ecr_repo               = data.terraform_remote_state.bic_infra.outputs.listopia_parser_ecr_name
-  batch_role_arn         = data.terraform_remote_state.bic_infra.outputs.batch_service_role_arn
-  ecs_instance_role_arn  = data.terraform_remote_state.bic_infra.outputs.ecs_instance_role_arn
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
-  batch_sg_id            = data.terraform_remote_state.bic_infra.outputs.batch_sg_id
   sqs_url                = data.terraform_remote_state.bic_infra.outputs.sqs_url
   hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
 }
@@ -56,4 +51,3 @@ resource "aws_batch_job_definition" "job" {
     attempt_duration_seconds = var.max_duration
   }
 }
-*/
