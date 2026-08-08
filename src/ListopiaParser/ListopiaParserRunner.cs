@@ -11,17 +11,19 @@ namespace ListopiaParser;
 public class ListopiaParserRunner : BackgroundService
 {
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly HttpClient _client;
     private readonly IListopiaService _listopiaService;
     private readonly IHardcoverService _hardcoverService;
     private readonly IAmazonSQS _sqsClient;
     private readonly ListopiaOptions _listopiaOptions;
     private readonly ILogger<ListopiaParserRunner> _logger;
 
-    public ListopiaParserRunner(IHostApplicationLifetime lifetime, IListopiaService listopiaService,
+    public ListopiaParserRunner(IHostApplicationLifetime lifetime, HttpClient httpClient, IListopiaService listopiaService,
         IHardcoverService hardcoverService, IAmazonSQS sqsClient, IOptions<ListopiaOptions> listopiaOptions,
         ILogger<ListopiaParserRunner> logger)
     {
         _lifetime = lifetime;
+        _client = httpClient;
         _listopiaService = listopiaService;
         _hardcoverService = hardcoverService;
         _sqsClient = sqsClient;
@@ -54,29 +56,45 @@ public class ListopiaParserRunner : BackgroundService
                     
                     foreach (var chunk in editionChunks)
                     {
-                        var messages = chunk.Select(x => new SendMessageBatchRequestEntry
+                        var messages = chunk.Select(e => new SendMessageBatchRequestEntry
                         {
-                            Id = $"{x.Id}-{x.Isbn13}",
-                            MessageBody = x.Image?.Url,
+                            Id = $"{e.Id}-{e.Isbn13}",
                             MessageAttributes = new Dictionary<string, MessageAttributeValue>
                             {
                                 {"cover_id", new MessageAttributeValue
                                 {
                                     DataType = "Number",
-                                    StringValue = x.Id.ToString()
+                                    StringValue = e.Id.ToString()
                                 }},
                                 {"book_id", new MessageAttributeValue
                                 {
                                     DataType = "Number",
-                                    StringValue = x.BookId.ToString()
+                                    StringValue = e.BookId.ToString()
                                 }},
                                 {"isbn_13", new MessageAttributeValue
                                 {
                                     DataType = "String",
-                                    StringValue = x.Isbn13
+                                    StringValue = e.Isbn13
+                                }},
+                                {"image_url", new MessageAttributeValue
+                                {
+                                    DataType = "String",
+                                    StringValue = e.Image?.Url
                                 }}
                             }
                         }).ToList();
+                        var imageTasks = messages.Select(async (m, i) =>
+                        {
+                            messages[i].MessageBody = await FetchBase64(chunk[i].Image?.Url, token);
+                        });
+                        await Task.WhenAll(imageTasks);
+                        
+                        if (chunk.Length > 0)
+                        {
+                            var temp = await FetchBase64(chunk[0].Image?.Url, token);
+                        }
+                        
+                        
                         var batchRequest = new SendMessageBatchRequest
                         {
                             QueueUrl = _listopiaOptions.SqsUrl,
@@ -104,5 +122,11 @@ public class ListopiaParserRunner : BackgroundService
             _logger.LogInformation("Listopia Parser completed");
             _lifetime.StopApplication();
         }
+    }
+
+    private async Task<string> FetchBase64(string? url, CancellationToken cancellationToken)
+    {
+        var image = await _client.GetByteArrayAsync(url, cancellationToken);
+        return Convert.ToBase64String(image);
     }
 }

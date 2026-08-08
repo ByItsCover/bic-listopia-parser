@@ -1,3 +1,4 @@
+using System.Net;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using ListopiaParser.Configs;
@@ -8,12 +9,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using Moq.Protected;
 
 namespace ListopiaParser.Tests;
 
 public class ListopiaParserRunnerTests
 {
     private Mock<IHostApplicationLifetime> _lifetimeMock;
+    private Mock<HttpMessageHandler> _handlerMock;
     private Mock<IListopiaService> _listopiaServiceMock;
     private Mock<IHardcoverService> _hardcoverServiceMock;
     private Mock<IAmazonSQS> _sqsClientMock;
@@ -29,6 +32,7 @@ public class ListopiaParserRunnerTests
     public void Setup()
     {
         _lifetimeMock = new Mock<IHostApplicationLifetime>();
+        _handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _listopiaServiceMock = new Mock<IListopiaService>();
         _hardcoverServiceMock = new Mock<IHardcoverService>();
         _sqsClientMock = new Mock<IAmazonSQS>();
@@ -62,11 +66,19 @@ public class ListopiaParserRunnerTests
             {
                 Successful = new List<SendMessageBatchResultEntry>()
             });
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage()
+            {
+                StatusCode = HttpStatusCode.OK
+            });
         
         _services = new ServiceCollection();
         
         _services.AddSingleton<IHostedService, ListopiaParserRunner>();
         _services.AddSingleton(_lifetimeMock.Object);
+        _services.AddSingleton(new HttpClient(_handlerMock.Object));
         _services.AddSingleton(_listopiaServiceMock.Object);
         _services.AddSingleton(_hardcoverServiceMock.Object);
         _services.AddSingleton(_sqsClientMock.Object);
@@ -83,6 +95,9 @@ public class ListopiaParserRunnerTests
         var expectedSqsCalls = (int) Math.Ceiling(PageSize / (double)Constants.SqsMessageLimit) * _listopiaOptionValues.PageCount;
         
         Assert.That(_sut, Is.Not.Null);
+
+        //var client = new HttpClient(_handlerMock.Object);
+        //var res = await client.GetByteArrayAsync("https://www.goodreads.com/my-image");
         
         await _sut.StartAsync(CancellationToken.None);
         await Task.Delay(500, CancellationToken.None);

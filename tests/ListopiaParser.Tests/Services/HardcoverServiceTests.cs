@@ -56,7 +56,7 @@ public class HardcoverServiceTests
                 
                 query = """
                         query GetEditionsFromISBN($isbn_list: [String]) {
-                            editions(where: { isbn_13: { _in: $isbn_list } }) {
+                            editions(where: { default_cover_edition: { isbn_13: { _in: $isbn_list } } }) {
                                 id
                                 isbn_13
                                 book_id
