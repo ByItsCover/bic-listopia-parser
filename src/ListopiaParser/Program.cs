@@ -45,6 +45,7 @@ builder.Services.Configure<EmbedOptions>(builder.Configuration.GetSection("Embed
 builder.Services.AddAWSService<IAmazonSQS>();
 builder.Services.AddHttpClient<IListopiaService, ListopiaService>();
 builder.Services.AddHttpClient<IHardcoverService, HardcoverService>();
+builder.Services.AddHttpClient<ListopiaParserRunner>();
 builder.Services.AddHostedService<ListopiaParserRunner>();
 
 var host = builder.Build();
