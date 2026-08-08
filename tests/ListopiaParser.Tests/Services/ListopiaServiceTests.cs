@@ -23,7 +23,7 @@ public class ListopiaServiceTests
         {
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
-            SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
+            BucketName = "cover_dump",
             PageStart = 1,
             PageCount = 10,
             MaxParallelCount = 2

@@ -1,6 +1,6 @@
 using System.Net;
-using Amazon.SQS;
-using Amazon.SQS.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using ListopiaParser.ResponseTypes;
@@ -19,7 +19,7 @@ public class ListopiaParserRunnerTests
     private Mock<HttpMessageHandler> _handlerMock;
     private Mock<IListopiaService> _listopiaServiceMock;
     private Mock<IHardcoverService> _hardcoverServiceMock;
-    private Mock<IAmazonSQS> _sqsClientMock;
+    private Mock<IAmazonS3> _s3ClientMock;
     private IOptions<ListopiaOptions> _listopiaOptions;
     private ListopiaOptions _listopiaOptionValues;
     private Mock<ILogger<ListopiaParserRunner>> _loggerMock;
@@ -35,13 +35,13 @@ public class ListopiaParserRunnerTests
         _handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _listopiaServiceMock = new Mock<IListopiaService>();
         _hardcoverServiceMock = new Mock<IHardcoverService>();
-        _sqsClientMock = new Mock<IAmazonSQS>();
+        _s3ClientMock = new Mock<IAmazonS3>();
         _loggerMock = new Mock<ILogger<ListopiaParserRunner>>();
         _listopiaOptionValues = new ListopiaOptions
         {
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
-            SqsUrl = "https://sqs.us-east-1.amazonaws.com/123456/my-sqs",
+            BucketName = "cover_dump",
             PageStart = 1,
             PageCount = 10,
             MaxParallelCount = 2
@@ -60,12 +60,9 @@ public class ListopiaParserRunnerTests
                     Url = "https://www.goodreads.com/my-image"
                 }
             }, PageSize).ToList());
-        _sqsClientMock
-            .Setup(x => x.SendMessageBatchAsync(It.IsAny<SendMessageBatchRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SendMessageBatchResponse()
-            {
-                Successful = new List<SendMessageBatchResultEntry>()
-            });
+        _s3ClientMock
+            .Setup(x => x.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PutObjectResponse());
         _handlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
@@ -81,7 +78,7 @@ public class ListopiaParserRunnerTests
         _services.AddSingleton(new HttpClient(_handlerMock.Object));
         _services.AddSingleton(_listopiaServiceMock.Object);
         _services.AddSingleton(_hardcoverServiceMock.Object);
-        _services.AddSingleton(_sqsClientMock.Object);
+        _services.AddSingleton(_s3ClientMock.Object);
         _services.AddSingleton(_listopiaOptions);
         _services.AddSingleton(_loggerMock.Object);
         
@@ -92,13 +89,10 @@ public class ListopiaParserRunnerTests
     [Test]
     public async Task TestExecuteAsync()
     {
-        var expectedSqsCalls = (int) Math.Ceiling(PageSize / (double)Constants.SqsMessageLimit) * _listopiaOptionValues.PageCount;
+        var expectedS3Calls = PageSize * _listopiaOptionValues.PageCount;
         
         Assert.That(_sut, Is.Not.Null);
 
-        //var client = new HttpClient(_handlerMock.Object);
-        //var res = await client.GetByteArrayAsync("https://www.goodreads.com/my-image");
-        
         await _sut.StartAsync(CancellationToken.None);
         await Task.Delay(500, CancellationToken.None);
         await _sut.StopAsync(CancellationToken.None);
@@ -115,10 +109,10 @@ public class ListopiaParserRunnerTests
                 It.IsAny<CancellationToken>()
             ), 
             Times.Exactly(_listopiaOptionValues.PageCount));
-        _sqsClientMock.Verify(x => x.SendMessageBatchAsync(
-                It.IsAny<SendMessageBatchRequest>(),
+        _s3ClientMock.Verify(x => x.PutObjectAsync(
+                It.IsAny<PutObjectRequest>(),
                 It.IsAny<CancellationToken>()
             ), 
-            Times.Exactly(expectedSqsCalls));
+            Times.Exactly(expectedS3Calls));
     }
 }

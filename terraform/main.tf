@@ -1,7 +1,7 @@
 locals {
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
-  sqs_url                = data.terraform_remote_state.bic_infra.outputs.sqs_url
   hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
+  cover_dump_name        = data.terraform_remote_state.bic_infra.outputs.s3_cover_dump_name
 }
 
 
@@ -30,12 +30,12 @@ resource "aws_batch_job_definition" "job" {
         value = var.dotnet_env
       },
       {
-        name  = "ListopiaOptions__SqsUrl"
-        value = local.sqs_url
-      },
-      {
         name  = "AWS_REGION"
         value = var.aws_region
+      },
+      {
+        name  = "ListopiaOptions__BucketName"
+        value = local.cover_dump_name
       }
     ]
 

@@ -1,6 +1,6 @@
 ﻿using Amazon.Runtime;
 using Amazon.Runtime.Credentials;
-using Amazon.SQS;
+using Amazon.S3;
 using AwsSignatureVersion4;
 using ListopiaParser;
 using ListopiaParser.Configs;
@@ -41,8 +41,7 @@ if (!builder.Environment.IsDevelopment())
 
 builder.Services.Configure<ListopiaOptions>(builder.Configuration.GetSection("ListopiaOptions"));
 builder.Services.Configure<HardcoverOptions>(builder.Configuration.GetSection("HardcoverOptions"));
-builder.Services.Configure<EmbedOptions>(builder.Configuration.GetSection("EmbedOptions"));
-builder.Services.AddAWSService<IAmazonSQS>();
+builder.Services.AddAWSService<IAmazonS3>();
 builder.Services.AddHttpClient<IListopiaService, ListopiaService>();
 builder.Services.AddHttpClient<IHardcoverService, HardcoverService>();
 builder.Services.AddHttpClient<ListopiaParserRunner>();
