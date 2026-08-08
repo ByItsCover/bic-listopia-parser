@@ -1,5 +1,5 @@
-using Amazon.SQS;
-using Amazon.SQS.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using Microsoft.Extensions.Hosting;
@@ -14,19 +14,19 @@ public class ListopiaParserRunner : BackgroundService
     private readonly HttpClient _client;
     private readonly IListopiaService _listopiaService;
     private readonly IHardcoverService _hardcoverService;
-    private readonly IAmazonSQS _sqsClient;
+    private readonly IAmazonS3 _s3Client;
     private readonly ListopiaOptions _listopiaOptions;
     private readonly ILogger<ListopiaParserRunner> _logger;
 
     public ListopiaParserRunner(IHostApplicationLifetime lifetime, HttpClient httpClient, IListopiaService listopiaService,
-        IHardcoverService hardcoverService, IAmazonSQS sqsClient, IOptions<ListopiaOptions> listopiaOptions,
+        IHardcoverService hardcoverService, IAmazonS3 s3Client, IOptions<ListopiaOptions> listopiaOptions,
         ILogger<ListopiaParserRunner> logger)
     {
         _lifetime = lifetime;
         _client = httpClient;
         _listopiaService = listopiaService;
         _hardcoverService = hardcoverService;
-        _sqsClient = sqsClient;
+        _s3Client = s3Client;
         _listopiaOptions = listopiaOptions.Value;
         _logger = logger;
     }
@@ -49,66 +49,32 @@ public class ListopiaParserRunner : BackgroundService
             {
                 var isbnList = await _listopiaService.GetListopiaIsbns(page, token);
                 var editions = await _hardcoverService.GetBookEditions(isbnList, token);
-                
-                try
+
+                var s3Tasks = editions.Select(async e =>
                 {
-                    var editionChunks = editions.Chunk(Constants.SqsMessageLimit).ToList();
-                    
-                    foreach (var chunk in editionChunks)
+                    var request = new PutObjectRequest
                     {
-                        var messages = chunk.Select(e => new SendMessageBatchRequestEntry
-                        {
-                            Id = $"{e.Id}-{e.Isbn13}",
-                            MessageAttributes = new Dictionary<string, MessageAttributeValue>
-                            {
-                                {"cover_id", new MessageAttributeValue
-                                {
-                                    DataType = "Number",
-                                    StringValue = e.Id.ToString()
-                                }},
-                                {"book_id", new MessageAttributeValue
-                                {
-                                    DataType = "Number",
-                                    StringValue = e.BookId.ToString()
-                                }},
-                                {"isbn_13", new MessageAttributeValue
-                                {
-                                    DataType = "String",
-                                    StringValue = e.Isbn13
-                                }},
-                                {"image_url", new MessageAttributeValue
-                                {
-                                    DataType = "String",
-                                    StringValue = e.Image?.Url
-                                }}
-                            }
-                        }).ToList();
-                        var imageTasks = messages.Select(async (m, i) =>
-                        {
-                            messages[i].MessageBody = await FetchBase64(chunk[i].Image?.Url, token);
-                        });
-                        await Task.WhenAll(imageTasks);
-                        
-                        if (chunk.Length > 0)
-                        {
-                            var temp = await FetchBase64(chunk[0].Image?.Url, token);
-                        }
-                        
-                        
-                        var batchRequest = new SendMessageBatchRequest
-                        {
-                            QueueUrl = _listopiaOptions.SqsUrl,
-                            Entries = messages
-                        };
-                    
-                        var batchResponse = await _sqsClient.SendMessageBatchAsync(batchRequest, token);
-                        embeddingsUploaded += batchResponse.Successful.Count;
+                        BucketName = _listopiaOptions.BucketName,
+                        Key = $"{e.Id}-{e.Isbn13}.bin",
+                        InputStream = await FetchStream(e.Image?.Url, token)
+                    };
+                    request.Metadata.Add("cover_id", e.Id.ToString());
+                    request.Metadata.Add("book_id", e.BookId.ToString());
+                    request.Metadata.Add("isbn_13", e.Isbn13);
+                    request.Metadata.Add("image_url", e.Image?.Url);
+
+                    try
+                    {
+                        await _s3Client.PutObjectAsync(request, token);
+                        embeddingsUploaded += 1;
                     }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Error: {Message}", e.Message);
-                }
+                    catch (AmazonS3Exception exception)
+                    {
+                        _logger.LogError(exception, "Error: {Message}", exception.Message);
+                    }
+                });
+                
+                await Task.WhenAll(s3Tasks);
             });
 
             _logger.LogInformation("Number of embeddings uploaded: {Count}", embeddingsUploaded);
@@ -124,9 +90,9 @@ public class ListopiaParserRunner : BackgroundService
         }
     }
 
-    private async Task<string> FetchBase64(string? url, CancellationToken cancellationToken)
+    private async Task<Stream> FetchStream(string? url, CancellationToken cancellationToken)
     {
         var image = await _client.GetByteArrayAsync(url, cancellationToken);
-        return Convert.ToBase64String(image);
+        return new MemoryStream(image);
     }
 }
