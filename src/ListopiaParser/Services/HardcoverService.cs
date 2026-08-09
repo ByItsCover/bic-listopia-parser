@@ -3,7 +3,7 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
-using ListopiaParser.ResponseTypes;
+using ListopiaParser.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -27,18 +27,26 @@ public class HardcoverService : IHardcoverService
         );
     }
 
-    public async Task<List<Edition>> GetBookEditions(IEnumerable<string> isbnList, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Cover>> GetBookCovers(IEnumerable<string> isbnList, CancellationToken cancellationToken)
     {
         var editionsFromIsbnRequest = new GraphQLRequest
         {
             Query = """
                     query GetEditionsFromISBN($isbn_list: [String]) {
-                        editions(where: { default_cover_edition: { isbn_13: { _in: $isbn_list } } }) {
+                        books(
+                            where: { 
+                                default_cover_edition: { isbn_13: { _in: $isbn_list } } 
+                            }
+                        ) {
                             id
-                            isbn_13
-                            book_id
-                            image {
-                                url
+                            title
+                            
+                            default_cover_edition {
+                                id
+                                isbn_13
+                                image {
+                                    url
+                                }
                             }
                         }
                     }
@@ -61,9 +69,19 @@ public class HardcoverService : IHardcoverService
                         e.Message));
             throw new AggregateException(exceptions);
         }
+
+        var covers = response.Data.Books
+            .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
+            .Select(b => new Cover
+            {
+                CoverId = b.DefaultCoverEdition!.Id,
+                BookId = b.Id,
+                Isbn13 = b.DefaultCoverEdition.Isbn13,
+                CoverUrl = b.DefaultCoverEdition.Image!.Url
+            });
         
-        _logger.LogInformation("Retrieved {Count} editions", response.Data.Editions.Count);
+        _logger.LogInformation("Retrieved {Count} books", response.Data.Books);
         
-        return response.Data.Editions;
+        return covers;
     }
 }

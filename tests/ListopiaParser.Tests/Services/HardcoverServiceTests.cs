@@ -1,6 +1,6 @@
 using AwesomeAssertions;
 using ListopiaParser.Configs;
-using ListopiaParser.ResponseTypes;
+using ListopiaParser.Entities;
 using ListopiaParser.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -36,18 +36,15 @@ public class HardcoverServiceTests
     [Test]
     public async Task TestGetBookEditions()
     {
-        var isbnList = new List<string> { "1111111111111" };
-        var expectedEditions = new List<Edition>
+        var isbnList = new List<string> { "9780439023481" };
+        var expectedCovers = new List<Cover>
         {
             new()
             {
-                Id = 1,
-                Image = new EditionImage()
-                {
-                    Url = "https://www.randomsite.com/test.png"
-                },
-                Isbn13 = "1111111111111",
-                BookId = 10
+                CoverId = 1589497,
+                BookId = 88639,
+                Isbn13 = "9780439023481",
+                CoverUrl = "https://assets.hardcover.app/editions/1589497/2979196565308831-lf%202.jpeg"
             }
         };
         var expectedRequest = _mockHttp.Expect(_optionValues.HardcoverUrl)
@@ -56,48 +53,57 @@ public class HardcoverServiceTests
                 
                 query = """
                         query GetEditionsFromISBN($isbn_list: [String]) {
-                            editions(where: { default_cover_edition: { isbn_13: { _in: $isbn_list } } }) {
+                            books(
+                                where: { 
+                                    default_cover_edition: { isbn_13: { _in: $isbn_list } } 
+                                }
+                            ) {
                                 id
-                                isbn_13
-                                book_id
-                                image {
-                                    url
+                                title
+                                
+                                default_cover_edition {
+                                    id
+                                    isbn_13
+                                    image {
+                                        url
+                                    }
                                 }
                             }
                         }
                         """,
                 operationName = "GetEditionsFromISBN",
                 variables = new {
-                    isbn_list = new[]
-                    {
-                        "1111111111111"
-                    } 
+                    isbn_list = isbnList
                 }
             })
             .Respond("application/json", """
                  {
                      "data": {
-                         "editions": [
+                         "books": [
                              {
-                                 "id": 1,
-                                 "isbn_13": "1111111111111",
-                                 "book_id": 10,
-                                 "asin": null,
-                                 "image": {
-                                     "url": "https://www.randomsite.com/test.png"
+                                 "id": 88639,
+                                 "title": "The Hunger Games",
+                                 "default_cover_edition": {
+                                   "id": 1589497,
+                                   "isbn_13": "9780439023481",
+                                   "image": {
+                                     "url": "https://assets.hardcover.app/editions/1589497/2979196565308831-lf%202.jpeg"
+                                   }
                                  }
+                                 
                              }
                          ]
                      }
                  }
                  """);
         
-        var editionsList = await _sut.GetBookEditions(isbnList, CancellationToken.None);
+        var covers = await _sut.GetBookCovers(isbnList, CancellationToken.None);
+        var coverList = covers.ToList();
         
         Assert.That(_mockHttp.GetMatchCount(expectedRequest), Is.EqualTo(1));
-        Assert.That(editionsList, Is.Not.Null);
-        Assert.That(editionsList.Count, Is.EqualTo(1));
-        editionsList.Should().BeEquivalentTo(expectedEditions);
+        Assert.That(coverList, Is.Not.Null);
+        Assert.That(coverList.Count, Is.EqualTo(1));
+        coverList.Should().BeEquivalentTo(expectedCovers);
     }
     
     [TearDown]

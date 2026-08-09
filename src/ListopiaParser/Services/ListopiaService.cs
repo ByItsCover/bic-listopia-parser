@@ -26,7 +26,7 @@ public class ListopiaService : IListopiaService
         _context = BrowsingContext.New(config);
     }
     
-    public async Task<List<string>> GetListopiaIsbns(int pageNumber, CancellationToken cancellationToken)
+    public async Task<List<Task<string?>>> GetListopiaIsbns(int pageNumber, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting listopia parse page {PageNumber}", pageNumber);
         var request = new HttpRequestMessage(HttpMethod.Get, ToAbsolute(_options.ListopiaUrl, $"?page={pageNumber}"));
@@ -36,21 +36,25 @@ public class ListopiaService : IListopiaService
 
         var document = await _context.OpenAsync(req => req.Content(htmlContent), cancellationToken);
         var bookTitleElements = document.QuerySelectorAll("#all_votes tr a.bookTitle");
-        var bookUrls = bookTitleElements.Select(x => ToAbsolute(_options.GoodreadsBase, x.GetAttribute("href"))).ToList();
+        var bookUrls = bookTitleElements
+            .Select(x => ToAbsolute(_options.GoodreadsBase, x.GetAttribute("href")))
+            .ToList();
 
-        var isbnList = new List<string>();
-        await foreach (var isbnTask in Task.WhenEach(bookUrls.Select(x => GetBookIsbn(x, cancellationToken))).WithCancellation(cancellationToken))
-        {
-            try
+        var isbnTasks = bookUrls
+            .Select(async b =>
             {
-                isbnList.Add(await isbnTask);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error: {Message}", e.Message);
-            }
-        }
-        return isbnList;
+                try
+                {
+                    return await GetBookIsbn(b, cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error: {Message}", e.Message);
+                    return null;
+                }
+            });
+        
+        return isbnTasks.ToList();
     }
 
     private async Task<string> GetBookIsbn(string url, CancellationToken cancellationToken)
