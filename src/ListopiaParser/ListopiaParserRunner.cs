@@ -42,35 +42,38 @@ public class ListopiaParserRunner : BackgroundService
 
         try
         {
-            var pages = Enumerable.Range(_listopiaOptions.PageStart, _listopiaOptions.PageCount).ToList();
+            var pages = Enumerable.Range(_listopiaOptions.PageStart, _listopiaOptions.PageCount);
             var embeddingsUploaded = 0;
             
             await Parallel.ForEachAsync(pages, options, async (page, token) =>
             {
-                var isbnList = await _listopiaService.GetListopiaIsbns(page, token);
-                var editions = await _hardcoverService.GetBookEditions(isbnList, token);
+                var isbnTasks = await _listopiaService.GetListopiaIsbns(page, token);
+                var isbnList = (await Task.WhenAll(isbnTasks))
+                    .Where(s => s != null)
+                    .ToList();
+                var covers = await _hardcoverService.GetBookCovers(isbnList!, token);
 
-                var s3Tasks = editions.Select(async e =>
+                var s3Tasks = covers.Select(async c =>
                 {
                     var request = new PutObjectRequest
                     {
                         BucketName = _listopiaOptions.BucketName,
-                        Key = $"{e.Id}-{e.Isbn13}.bin",
-                        InputStream = await FetchStream(e.Image?.Url, token)
+                        Key = $"{c.CoverId}-{c.Isbn13}.bin",
+                        InputStream = await FetchStream(c.CoverUrl, token)
                     };
-                    request.Metadata.Add("cover_id", e.Id.ToString());
-                    request.Metadata.Add("book_id", e.BookId.ToString());
-                    request.Metadata.Add("isbn_13", e.Isbn13);
-                    request.Metadata.Add("image_url", e.Image?.Url);
+                    request.Metadata.Add("cover_id", c.CoverId.ToString());
+                    request.Metadata.Add("book_id", c.BookId.ToString());
+                    request.Metadata.Add("isbn_13", c.Isbn13);
+                    request.Metadata.Add("image_url", c.CoverUrl);
 
                     try
                     {
                         await _s3Client.PutObjectAsync(request, token);
                         embeddingsUploaded += 1;
                     }
-                    catch (AmazonS3Exception exception)
+                    catch (AmazonS3Exception e)
                     {
-                        _logger.LogError(exception, "Error: {Message}", exception.Message);
+                        _logger.LogError(e, "Error: {Message}", e.Message);
                     }
                 });
                 
@@ -90,7 +93,7 @@ public class ListopiaParserRunner : BackgroundService
         }
     }
 
-    private async Task<Stream> FetchStream(string? url, CancellationToken cancellationToken)
+    private async Task<Stream> FetchStream(string url, CancellationToken cancellationToken)
     {
         var image = await _client.GetByteArrayAsync(url, cancellationToken);
         return new MemoryStream(image);

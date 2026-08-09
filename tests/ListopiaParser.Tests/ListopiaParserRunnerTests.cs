@@ -3,7 +3,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
-using ListopiaParser.ResponseTypes;
+using ListopiaParser.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -48,17 +48,21 @@ public class ListopiaParserRunnerTests
         };
         _listopiaOptions = Options.Create(_listopiaOptionValues);
 
+        _listopiaServiceMock
+            .Setup(x => x.GetListopiaIsbns(
+                It.IsInRange(_listopiaOptionValues.PageStart,
+                    _listopiaOptionValues.PageStart + _listopiaOptionValues.PageCount - 1, Moq.Range.Inclusive),
+                It.IsAny<CancellationToken>()
+            ))
+            .ReturnsAsync(Enumerable.Repeat(Task.FromResult<string?>("abc123"), PageSize).ToList());
         _hardcoverServiceMock
-            .Setup(x => x.GetBookEditions(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Enumerable.Repeat(new Edition
+            .Setup(x => x.GetBookCovers(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Enumerable.Repeat(new Cover
             {
-                Id = 1,
-                Isbn13 = "abc123",
+                CoverId = 1,
                 BookId = 10,
-                Image = new EditionImage
-                {
-                    Url = "https://www.goodreads.com/my-image"
-                }
+                Isbn13 = "abc123",
+                CoverUrl = "https://www.goodreads.com/my-image"
             }, PageSize).ToList());
         _s3ClientMock
             .Setup(x => x.PutObjectAsync(It.IsAny<PutObjectRequest>(), It.IsAny<CancellationToken>()))
@@ -104,7 +108,7 @@ public class ListopiaParserRunnerTests
             It.IsAny<CancellationToken>()
             ), 
             Times.Exactly(_listopiaOptionValues.PageCount));
-        _hardcoverServiceMock.Verify(x => x.GetBookEditions(
+        _hardcoverServiceMock.Verify(x => x.GetBookCovers(
                 It.IsAny<List<string>>(),
                 It.IsAny<CancellationToken>()
             ), 

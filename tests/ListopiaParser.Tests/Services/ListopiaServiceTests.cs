@@ -53,7 +53,8 @@ public class ListopiaServiceTests
         var bookCRequest = _mockHttp.Expect(_optionValues.GoodreadsBase + "/book/show/3-book-c")
             .Respond("text/html", BookResponse("Book C", 560, "3333333333333"));
 
-        var isbnList = await _sut.GetListopiaIsbns(page, CancellationToken.None);
+        var isbnTasks = await _sut.GetListopiaIsbns(page, CancellationToken.None);
+        var isbnList = await Task.WhenAll(isbnTasks);
         
         Assert.That(_mockHttp.GetMatchCount(listopiaRequest), Is.EqualTo(1));
         Assert.That(_mockHttp.GetMatchCount(bookARequest), Is.EqualTo(1));
