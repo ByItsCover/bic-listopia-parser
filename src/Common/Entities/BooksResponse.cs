@@ -11,6 +11,8 @@ public class Book
 {
     public required int Id { get; init; }
     public required string? Title { get; init; }
+    [JsonPropertyName("users_count")]
+    public int UsersCount { get; init; }
     [JsonPropertyName("default_cover_edition")]
     public required Edition? DefaultCoverEdition { get; init; }
 }

@@ -59,16 +59,8 @@ public class HardcoverService : IHardcoverService
         };
 
         var response = await _client.SendQueryAsync<BooksResponse>(editionsFromIsbnRequest, cancellationToken);
-        
-        if (response.Errors != null && response.Errors.Any())
-        {
-            var responseDetails = response.AsGraphQLHttpResponse();
-            var exceptions = response.Errors
-                .Select(e =>
-                    new GraphQLHttpRequestException(responseDetails.StatusCode, responseDetails.ResponseHeaders,
-                        e.Message));
-            throw new AggregateException(exceptions);
-        }
+
+        HandleErrors(response);
 
         var covers = response.Data.Books
             .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
@@ -83,5 +75,149 @@ public class HardcoverService : IHardcoverService
         _logger.LogInformation("Retrieved {Count} books", response.Data.Books);
         
         return covers;
+    }
+
+    public async Task<IEnumerable<Cover>> GetPopularCovers(int count, CancellationToken cancellationToken)
+    {
+        var popularCoversRequest = new GraphQLRequest
+        {
+            Query = """
+                    query PopularCovers($popular_count: Int) {
+                        books(
+                            order_by: [{users_count: desc}]
+                            limit $popular_count
+                        ) {
+                            id
+                            title
+                            users_count
+                            
+                            default_cover_edition {
+                                id
+                                isbn_13
+                                image {
+                                    url
+                                }
+                            }
+                        }
+                    }
+                    """,
+            OperationName = "PopularCovers",
+            Variables = new
+            {
+                popular_count = count
+            }
+        };
+
+        var response = await _client.SendQueryAsync<BooksResponse>(popularCoversRequest, cancellationToken);
+
+        HandleErrors(response);
+
+        var covers = response.Data.Books
+            .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
+            .Select(b => new Cover
+            {
+                CoverId = b.DefaultCoverEdition!.Id,
+                BookId = b.Id,
+                Isbn13 = b.DefaultCoverEdition.Isbn13,
+                CoverUrl = b.DefaultCoverEdition.Image!.Url,
+                UsersCount = b.UsersCount
+            });
+        
+        _logger.LogInformation("Retrieved {Count} popular books", response.Data.Books);
+        
+        return covers;
+    }
+    
+    public async Task<IEnumerable<Cover>> GetTrendingCovers(int count, CancellationToken cancellationToken)
+    {
+        var trendingBookIdsRequest = new GraphQLRequest
+        {
+            Query = """
+                    query TrendingBookIds($trending_count: Int) {
+                        books_trending(
+                            duration: month,
+                            limit $trending_count
+                        ) {
+                            ids
+                        }
+                    }
+                    """,
+            OperationName = "TrendingBookIds",
+            Variables = new
+            {
+                trending_count = count
+            }
+        };
+
+        var idsResponse = await _client.SendQueryAsync<TrendingIdsResponse>(trendingBookIdsRequest, cancellationToken);
+
+        HandleErrors(idsResponse);
+        if (idsResponse.Data.BooksTrending.Ids.Count == 0)
+        {
+            _logger.LogWarning("No trending books found");
+            return [];
+        }
+        
+        var trendingCoversRequest = new GraphQLRequest
+        {
+            Query = """
+                    query TrendingCovers($id_list: [Int]) {
+                        books(
+                            where: {
+                                id: {_in: $id_list}
+                            }
+                        ) {
+                            id
+                            title
+                            users_count
+                            
+                            default_cover_edition {
+                                id
+                                isbn_13
+                                image {
+                                    url
+                                }
+                            }
+                        }
+                    }
+                    """,
+            OperationName = "TrendingCovers",
+            Variables = new
+            {
+                id_list = idsResponse.Data.BooksTrending.Ids
+            }
+        };
+
+        var coversResponse = await _client.SendQueryAsync<BooksResponse>(trendingCoversRequest, cancellationToken);
+
+        HandleErrors(coversResponse);
+
+        var covers = coversResponse.Data.Books
+            .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
+            .Select(b => new Cover
+            {
+                CoverId = b.DefaultCoverEdition!.Id,
+                BookId = b.Id,
+                Isbn13 = b.DefaultCoverEdition.Isbn13,
+                CoverUrl = b.DefaultCoverEdition.Image!.Url,
+                UsersCount = b.UsersCount
+            });
+        
+        _logger.LogInformation("Retrieved {Count} trending books", coversResponse.Data.Books);
+        
+        return covers;
+    }
+
+    private static void HandleErrors<T>(GraphQLResponse<T> response)
+    {
+        if (response.Errors != null && response.Errors.Any())
+        {
+            var responseDetails = response.AsGraphQLHttpResponse();
+            var exceptions = response.Errors
+                .Select(e =>
+                    new GraphQLHttpRequestException(responseDetails.StatusCode, responseDetails.ResponseHeaders,
+                        e.Message));
+            throw new AggregateException(exceptions);
+        }
     }
 }
