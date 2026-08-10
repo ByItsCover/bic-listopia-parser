@@ -1,13 +1,13 @@
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
-using ListopiaParser.Configs;
-using ListopiaParser.Interfaces;
-using ListopiaParser.Entities;
+using Common.Configs;
+using Common.Interfaces;
+using Common.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ListopiaParser.Services;
+namespace Common.Services;
 
 public class HardcoverService : IHardcoverService
 {
@@ -27,7 +27,7 @@ public class HardcoverService : IHardcoverService
         );
     }
 
-    public async Task<IEnumerable<Cover>> GetBookCovers(IEnumerable<string> isbnList, CancellationToken cancellationToken)
+    public async Task<IEnumerable<Cover>> GetCoversByIsbn(IEnumerable<string> isbnList, CancellationToken cancellationToken)
     {
         var editionsFromIsbnRequest = new GraphQLRequest
         {
@@ -58,7 +58,7 @@ public class HardcoverService : IHardcoverService
             }
         };
 
-        var response = await _client.SendQueryAsync<EditionsResponse>(editionsFromIsbnRequest, cancellationToken);
+        var response = await _client.SendQueryAsync<BooksResponse>(editionsFromIsbnRequest, cancellationToken);
         
         if (response.Errors != null && response.Errors.Any())
         {

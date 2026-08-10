@@ -1,4 +1,4 @@
-namespace ListopiaParser.Configs;
+namespace Common.Configs;
 
 public class HardcoverOptions
 {

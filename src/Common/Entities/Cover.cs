@@ -1,4 +1,4 @@
-namespace ListopiaParser.Entities;
+namespace Common.Entities;
 
 public class Cover
 {

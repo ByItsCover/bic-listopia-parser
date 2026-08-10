@@ -2,6 +2,9 @@
 using Amazon.Runtime.Credentials;
 using Amazon.S3;
 using AwsSignatureVersion4;
+using Common.Configs;
+using Common.Interfaces;
+using Common.Services;
 using ListopiaParser;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;

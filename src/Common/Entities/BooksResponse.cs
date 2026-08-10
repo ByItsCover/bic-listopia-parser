@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace ListopiaParser.Entities;
+namespace Common.Entities;
 
-public class EditionsResponse
+public class BooksResponse
 {
     public required List<Book> Books { get; init; }
 }

@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using Common.Interfaces;
 using ListopiaParser.Configs;
 using ListopiaParser.Interfaces;
 using Microsoft.Extensions.Hosting;
@@ -51,7 +52,7 @@ public class ListopiaParserRunner : BackgroundService
                 var isbnList = (await Task.WhenAll(isbnTasks))
                     .Where(s => s != null)
                     .ToList();
-                var covers = await _hardcoverService.GetBookCovers(isbnList!, token);
+                var covers = await _hardcoverService.GetCoversByIsbn(isbnList!, token);
 
                 var s3Tasks = covers.Select(async c =>
                 {

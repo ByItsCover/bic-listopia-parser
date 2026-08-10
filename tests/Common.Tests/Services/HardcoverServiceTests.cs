@@ -1,13 +1,13 @@
 using AwesomeAssertions;
-using ListopiaParser.Configs;
-using ListopiaParser.Entities;
-using ListopiaParser.Services;
+using Common.Configs;
+using Common.Entities;
+using Common.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using RichardSzalay.MockHttp;
 
-namespace ListopiaParser.Tests.Services;
+namespace Common.Tests.Services;
 
 public class HardcoverServiceTests
 {
@@ -97,7 +97,7 @@ public class HardcoverServiceTests
                  }
                  """);
         
-        var covers = await _sut.GetBookCovers(isbnList, CancellationToken.None);
+        var covers = await _sut.GetCoversByIsbn(isbnList, CancellationToken.None);
         var coverList = covers.ToList();
         
         Assert.That(_mockHttp.GetMatchCount(expectedRequest), Is.EqualTo(1));
