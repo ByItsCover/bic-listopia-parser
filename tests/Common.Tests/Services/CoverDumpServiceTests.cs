@@ -47,7 +47,7 @@ public class CoverDumpServiceTests
         var imageFileRequest = _mockHttp.When(_coverRequest.CoverUrl)
             .Respond("image/jpeg", "surely an image");
 
-        var coversUploaded = await _sut.DumpCovers(Task.FromResult(coverList), bucketName, CancellationToken.None);
+        var coversUploaded = await _sut.DumpCovers(coverList, bucketName, CancellationToken.None);
         
         Assert.That(_mockHttp.GetMatchCount(imageFileRequest), Is.EqualTo(coversCount));
         Assert.That(coversUploaded, Is.EqualTo(coversCount));
