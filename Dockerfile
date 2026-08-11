@@ -4,7 +4,7 @@ ARG DOTNET_VERSION=10.0
 ARG BATCH_DIR="/publish"
 ARG TARGETARCH
 
-FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-alpine-${TARGETARCH} AS build
+FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 
 ARG TARGETARCH
 
@@ -32,7 +32,7 @@ RUN dotnet publish -c Release -o ${BATCH_DIR} -a ${TARGETARCH}
 
 # Deploy Stage
 
-FROM mcr.microsoft.com/dotnet/runtime:${DOTNET_VERSION}-alpine-${TARGETARCH} AS deploy
+FROM mcr.microsoft.com/dotnet/runtime:${DOTNET_VERSION}-noble-chiseled AS deploy
 
 ARG BATCH_DIR
 
