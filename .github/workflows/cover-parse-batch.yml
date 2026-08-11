@@ -1,4 +1,4 @@
-name: listopia-parse-batch
+name: cover-parse-batch
 
 on:
   workflow_dispatch:
@@ -7,25 +7,43 @@ on:
         description: 'Job Name'
         required: true
         type: string
+      jobType:
+        description: 'Cover Parse Job Type'
+        required: true
+        default: 'listopia_parser'
+        type: choice
+        options:
+          - hot_cover_parser
+          - listopia_parser
       listopiaUrl:
         description: 'Listopia URL For Scraping'
-        required: true
+        required: false
         default: 'https://www.goodreads.com/list/show/4581.Judge_A_Book_By_Its_Cover_'
         type: string
       pageStart:
         description: 'The page number for Listopia parser to start on'
-        required: true
+        required: false
         default: 1
         type: number
       pageCount:
         description: 'Number of Listopia pages to Scrape'
-        required: true
+        required: false
         default: 10
         type: number
       maxParallelCount:
         description: 'Maximum number of scraping calls to run in parallel'
-        required: true
-        default: 2
+        required: false
+        default: 4
+        type: number
+      popularCount:
+        description: 'Maximum number of popular books to pull'
+        required: false
+        default: 25
+        type: number
+      trendingCount:
+        description: 'Maximum number of trending books to pull'
+        required: false
+        default: 25
         type: number
 
 permissions:
@@ -48,7 +66,8 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_GITHUB_ROLE }}
 
-      - name: Submit Job
+      - name: Submit Listopia Parser Job
+        if: ${{ inputs.jobType == 'listopia_parser' }}
         run: |
           aws batch submit-job \
               --job-name ${{ inputs.jobName }}-${{ github.run_id }} \
@@ -56,6 +75,10 @@ jobs:
               --job-definition listopia_parser_batch_job_definition \
               --container-overrides '{
                 "environment": [
+                  {
+                    "name": "JOB_TYPE",
+                    "value": "${{ inputs.jobType }}"
+                  },
                   {
                     "name": "ListopiaOptions__ListopiaUrl",
                     "value": "${{ inputs.listopiaUrl }}"
@@ -71,6 +94,30 @@ jobs:
                   {
                     "name": "ListopiaOptions__MaxParallelCount",
                     "value": "${{ inputs.maxParallelCount }}"
+                  }
+                ]
+              }'
+          
+      - name: Submit Hot Cover Parser Job
+        if: ${{ inputs.jobType == 'hot_cover_parser' }}
+        run: |
+          aws batch submit-job \
+              --job-name ${{ inputs.jobName }}-${{ github.run_id }} \
+              --job-queue listopia-queue \
+              --job-definition listopia_parser_batch_job_definition \
+              --container-overrides '{
+                "environment": [
+                  {
+                    "name": "JOB_TYPE",
+                    "value": "${{ inputs.jobType }}"
+                  },
+                  {
+                    "name": "HotCoverOptions__PopularCount",
+                    "value": "${{ inputs.popularCount }}"
+                  },
+                  {
+                    "name": "HotCoverOptions__TrendingCount",
+                    "value": "${{ inputs.trendingCount }}"
                   }
                 ]
               }'

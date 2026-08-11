@@ -22,6 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\HotCoverParser\HotCoverParser.csproj" />
       <ProjectReference Include="..\ListopiaParser\ListopiaParser.csproj" />
     </ItemGroup>
 

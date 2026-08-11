@@ -11,8 +11,6 @@
     <ItemGroup>
       <PackageReference Include="AngleSharp" Version="1.5.3-beta.564" />
       <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.23" />
-      <PackageReference Include="AWSSDK.S3" Version="4.0.102" />
-      <PackageReference Include="AwsSignatureVersion4" Version="5.2.0-beta.1" />
       <PackageReference Include="GraphQL.Client" Version="6.1.0" />
       <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0-preview.6.26359.118" />

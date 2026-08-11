@@ -29,8 +29,7 @@ public class HardcoverServiceTests
         _mockHttp = new MockHttpMessageHandler();
         _loggerMock = new Mock<ILogger<HardcoverService>>();
         
-        var client = new HttpClient(_mockHttp);
-        _sut = new HardcoverService(client, _options, _loggerMock.Object);
+        _sut = new HardcoverService(new HttpClient(_mockHttp), _options, _loggerMock.Object);
     }
 
     [Test]
@@ -282,7 +281,6 @@ public class HardcoverServiceTests
         
         Assert.That(_mockHttp.GetMatchCount(expectedIdsRequest), Is.EqualTo(1));
         Assert.That(_mockHttp.GetMatchCount(expectedCoversRequest), Is.EqualTo(1));
-        Assert.That(coverList, Is.Not.Null);
         Assert.That(coverList.Count, Is.EqualTo(trendingCount));
         Assert.That(coverList.All(c => c.UsersCount.HasValue));
         coverList.Should().BeEquivalentTo(expectedCovers);

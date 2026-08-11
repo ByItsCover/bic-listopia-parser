@@ -6,4 +6,13 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="LanceDB" Version="2.5.0" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0-preview.6.26359.118" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
+    </ItemGroup>
+
 </Project>

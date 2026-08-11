@@ -4,6 +4,7 @@ using GraphQL.Client.Serializer.SystemTextJson;
 using Common.Configs;
 using Common.Interfaces;
 using Common.Entities;
+using Common.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -60,7 +61,7 @@ public class HardcoverService : IHardcoverService
 
         var response = await _client.SendQueryAsync<BooksResponse>(editionsFromIsbnRequest, cancellationToken);
 
-        HandleErrors(response);
+        RequestUtils.HandleGqlErrors(response);
 
         var covers = response.Data.Books
             .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
@@ -110,7 +111,7 @@ public class HardcoverService : IHardcoverService
 
         var response = await _client.SendQueryAsync<BooksResponse>(popularCoversRequest, cancellationToken);
 
-        HandleErrors(response);
+        RequestUtils.HandleGqlErrors(response);
 
         var covers = response.Data.Books
             .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
@@ -151,7 +152,7 @@ public class HardcoverService : IHardcoverService
 
         var idsResponse = await _client.SendQueryAsync<TrendingIdsResponse>(trendingBookIdsRequest, cancellationToken);
 
-        HandleErrors(idsResponse);
+        RequestUtils.HandleGqlErrors(idsResponse);
         if (idsResponse.Data.BooksTrending.Ids.Count == 0)
         {
             _logger.LogWarning("No trending books found");
@@ -190,7 +191,7 @@ public class HardcoverService : IHardcoverService
 
         var coversResponse = await _client.SendQueryAsync<BooksResponse>(trendingCoversRequest, cancellationToken);
 
-        HandleErrors(coversResponse);
+        RequestUtils.HandleGqlErrors(coversResponse);
 
         var covers = coversResponse.Data.Books
             .Where(b => b.DefaultCoverEdition?.Image?.Url != null)
@@ -206,18 +207,5 @@ public class HardcoverService : IHardcoverService
         _logger.LogInformation("Retrieved {Count} trending books", coversResponse.Data.Books);
         
         return covers;
-    }
-
-    private static void HandleErrors<T>(GraphQLResponse<T> response)
-    {
-        if (response.Errors != null && response.Errors.Any())
-        {
-            var responseDetails = response.AsGraphQLHttpResponse();
-            var exceptions = response.Errors
-                .Select(e =>
-                    new GraphQLHttpRequestException(responseDetails.StatusCode, responseDetails.ResponseHeaders,
-                        e.Message));
-            throw new AggregateException(exceptions);
-        }
     }
 }
