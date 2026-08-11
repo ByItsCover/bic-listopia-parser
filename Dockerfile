@@ -32,7 +32,7 @@ RUN dotnet publish -c Release -o ${BATCH_DIR} -a ${TARGETARCH}
 
 # Deploy Stage
 
-FROM mcr.microsoft.com/dotnet/runtime:${DOTNET_VERSION}-noble-chiseled AS deploy
+FROM mcr.microsoft.com/dotnet/runtime-deps:${DOTNET_VERSION}-noble-chiseled AS deploy
 
 ARG BATCH_DIR
 
