@@ -6,7 +6,6 @@ ARG BATCH_DIR="/publish"
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-alpine AS build
 
 ARG TARGETARCH
-ARG BATCH_DIR
 
 WORKDIR /build_dir
 COPY *.sln .
@@ -24,6 +23,7 @@ COPY . .
 FROM build AS publish
 
 ARG BATCH_DIR
+ARG TARGETARCH
 
 WORKDIR /build_dir/src/Orchestrator/
 
@@ -38,4 +38,4 @@ ARG BATCH_DIR
 WORKDIR /app
 COPY --from=publish ${BATCH_DIR} .
 
-ENTRYPOINT ["dotnet", "ListopiaParser.dll"]
+ENTRYPOINT ["dotnet", "Orchestrator.dll"]
