@@ -20,9 +20,8 @@ public class CoverDumpService : ICoverDumpService
         _logger = logger;
     }
     
-    public async Task<int> DumpCovers(Task<IEnumerable<Cover>> coverTasks, string bucketName, CancellationToken cancellationToken)
+    public async Task<int> DumpCovers(IEnumerable<Cover> covers, string bucketName, CancellationToken cancellationToken)
     {
-        var covers = await coverTasks;
         var s3Tasks = covers.Select(async c =>
         {
             var request = new PutObjectRequest

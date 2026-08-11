@@ -69,13 +69,9 @@ public class ListopiaParserRunnerTests
             .Setup(x => x.GetCoversByIsbn(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<string> isbnList, CancellationToken _) => Enumerable.Repeat(_coverResponse, isbnList.Count).ToList());
         _coverDumpServiceMock
-            .Setup(x => x.DumpCovers(It.IsAny<Task<IEnumerable<Cover>>>(), _awsResourceOptions.DumpBucketName,
+            .Setup(x => x.DumpCovers(It.IsAny<IEnumerable<Cover>>(), _awsResourceOptions.DumpBucketName,
                 It.IsAny<CancellationToken>()))
-            .Returns(async (Task<IEnumerable<Cover>> coverTasks, string _, CancellationToken _) =>
-            {
-                var covers = (await coverTasks).ToList();
-                return covers.Count;
-            });
+            .ReturnsAsync((IEnumerable<Cover> covers, string _, CancellationToken _) => covers.Count());
         
         _services = new ServiceCollection();
         
@@ -118,7 +114,7 @@ public class ListopiaParserRunnerTests
                 ),
             Times.Exactly(_listopiaOptions.PageCount));
         _coverDumpServiceMock.Verify(x => x.DumpCovers(
-                It.IsAny<Task<IEnumerable<Cover>>>(), _awsResourceOptions.DumpBucketName,
+                It.IsAny<IEnumerable<Cover>>(), _awsResourceOptions.DumpBucketName,
             It.IsAny<CancellationToken>()
                 ),
             Times.Exactly(_listopiaOptions.PageCount));

@@ -60,13 +60,9 @@ public class HotCoverParserRunnerTests
             .Setup(x => x.GetTrendingCovers(_hotCoverOptions.TrendingCount, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Enumerable.Repeat(_coverResponse, _hotCoverOptions.TrendingCount).ToList());
         _coverDumpServiceMock
-            .Setup(x => x.DumpCovers(It.IsAny<Task<IEnumerable<Cover>>>(), _awsResourceOptions.DumpBucketName,
+            .Setup(x => x.DumpCovers(It.IsAny<IEnumerable<Cover>>(), _awsResourceOptions.DumpBucketName,
                 It.IsAny<CancellationToken>()))
-            .Returns(async (Task<IEnumerable<Cover>> coverTasks, string _, CancellationToken _) =>
-            {
-                var covers = (await coverTasks).ToList();
-                return covers.Count;
-            });
+            .ReturnsAsync((IEnumerable<Cover> covers, string _, CancellationToken _) => covers.Count());
         _hotCoversTableMock
             .Setup(x => x.InsertCovers(
                 It.IsAny<Task<IEnumerable<Cover>>>(),
@@ -110,10 +106,10 @@ public class HotCoverParserRunnerTests
             ),
             Times.Once);
         _coverDumpServiceMock.Verify(x => x.DumpCovers(
-                It.IsAny<Task<IEnumerable<Cover>>>(), _awsResourceOptions.DumpBucketName,
+                It.IsAny<IEnumerable<Cover>>(), _awsResourceOptions.DumpBucketName,
             It.IsAny<CancellationToken>()
                 ),
-            Times.Exactly(2));
+            Times.Once);
         _hotCoversTableMock
             .Verify(x => x.InsertCovers(
                 It.IsAny<Task<IEnumerable<Cover>>>(),

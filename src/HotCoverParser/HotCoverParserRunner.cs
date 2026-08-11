@@ -43,14 +43,12 @@ public class HotCoverParserRunner : BackgroundService
             var popularCoversTask = _hardcoverService.GetPopularCovers(_hotCoverOptions.PopularCount, cancellationToken);
             var trendingCoversTask = _hardcoverService.GetTrendingCovers(_hotCoverOptions.TrendingCount, cancellationToken);
             
-            var popularUploadedTask = _coverDumpService.DumpCovers(popularCoversTask, _awsResourceOptions.DumpBucketName, cancellationToken);
-            var trendingUploadedTask = _coverDumpService.DumpCovers(trendingCoversTask, _awsResourceOptions.DumpBucketName, cancellationToken);
+            var coverDumpTask = DumpAllCovers(popularCoversTask, trendingCoversTask, cancellationToken);
             var popularInsertedTask = InsertPopularCovers(popularCoversTask);
             var trendingInsertedTask = InsertTrendingCovers(popularCoversTask);
 
             await Task.WhenAll(
-                popularUploadedTask,
-                trendingUploadedTask,
+                coverDumpTask,
                 popularInsertedTask,
                 trendingInsertedTask
             );
@@ -64,6 +62,18 @@ public class HotCoverParserRunner : BackgroundService
             _logger.LogInformation("Hot Cover Parser completed");
             _lifetime.StopApplication();
         }
+    }
+
+    private async Task<int> DumpAllCovers(Task<IEnumerable<Cover>> popularCoversTask, Task<IEnumerable<Cover>> trendingCoversTask, CancellationToken token)
+    {
+        var popularCovers = await popularCoversTask;
+        var trendingCovers = await trendingCoversTask;
+        
+        return await _coverDumpService.DumpCovers(
+            popularCovers.UnionBy(trendingCovers, c => c.CoverId),
+            _awsResourceOptions.DumpBucketName,
+            token
+        );
     }
 
     private async Task InsertPopularCovers(Task<IEnumerable<Cover>> coverTasks)

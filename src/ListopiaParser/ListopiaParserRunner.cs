@@ -56,10 +56,10 @@ public class ListopiaParserRunner : BackgroundService
                 var isbnList = (await Task.WhenAll(isbnTasks))
                     .Where(s => s != null)
                     .ToList();
-                var coverTasks = _hardcoverService.GetCoversByIsbn(isbnList!, token);
+                var coverList = await _hardcoverService.GetCoversByIsbn(isbnList!, token);
 
                 coversUploaded += await _coverDumpService.DumpCovers(
-                    coverTasks,
+                    coverList,
                     _awsResourceOptions.DumpBucketName,
                     token
                 );
