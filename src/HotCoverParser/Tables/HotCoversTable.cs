@@ -33,7 +33,7 @@ public class HotCoversTable : IHotCoversTable
         if (type == HotEnum.Trending)
         {
             insertQuery = insertQuery
-                .WhenNotMatchedBySourceDelete($"target.type = '${typeValue}'");
+                .WhenNotMatchedBySourceDelete($"type = '${typeValue}'");
         }
 
         return await insertQuery.Execute(coverRecords);
