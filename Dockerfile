@@ -1,30 +1,41 @@
 # Build Stage
 
 ARG DOTNET_VERSION=10.0
+ARG BATCH_DIR="/publish"
+
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-alpine AS build
+
 ARG TARGETARCH
+ARG BATCH_DIR
 
 WORKDIR /build_dir
 COPY *.sln .
+COPY src/Common/Common.csproj ./src/Common/
+COPY src/HotCoverParser/HotCoverParser.csproj ./src/HotCoverParser/
 COPY src/ListopiaParser/ListopiaParser.csproj ./src/ListopiaParser/
-COPY tests/ListopiaParser.Tests/ListopiaParser.Tests.csproj ./tests/ListopiaParser.Tests/
+COPY src/Orchestrator/Orchestrator.csproj ./src/Orchestrator/
 
-RUN dotnet restore -a ${TARGETARCH}
+RUN dotnet restore src/Orchestrator/Orchestrator.csproj -a ${TARGETARCH}
 
-COPY src/ListopiaParser/ ./src/ListopiaParser/
-COPY tests/ListopiaParser.Tests/ ./tests/ListopiaParser.Tests/
+COPY . .
 
 # Publish Stage
 
 FROM build AS publish
 
-RUN dotnet publish "src/ListopiaParser/ListopiaParser.csproj" -c Release -o /publish -a ${TARGETARCH}
+ARG BATCH_DIR
+
+WORKDIR /build_dir/src/Orchestrator/
+
+RUN dotnet publish -c Release -o ${BATCH_DIR} -a ${TARGETARCH}
 
 # Deploy Stage
 
 FROM mcr.microsoft.com/dotnet/runtime:${DOTNET_VERSION}-alpine AS deploy
 
+ARG BATCH_DIR
+
 WORKDIR /app
-COPY --from=publish /publish .
+COPY --from=publish ${BATCH_DIR} .
 
 ENTRYPOINT ["dotnet", "ListopiaParser.dll"]
