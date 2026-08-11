@@ -1,35 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <UserSecretsId>883869a2-f3d9-4086-8ec3-032f968bcb0b</UserSecretsId>
     </PropertyGroup>
 
-    <ItemGroup>
-      <None Update="appsettings.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="appsettings.Development.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="appsettings.Production.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 
     <ItemGroup>
       <PackageReference Include="AngleSharp" Version="1.5.3-beta.564" />
       <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.23" />
-      <PackageReference Include="AWSSDK.S3" Version="4.0.102" />
-      <PackageReference Include="AwsSignatureVersion4" Version="5.2.0-beta.1" />
       <PackageReference Include="GraphQL.Client" Version="6.1.0" />
       <PackageReference Include="GraphQL.Client.Serializer.SystemTextJson" Version="6.1.0" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0-preview.6.26359.118" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="11.0.0-preview.6.26359.118" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <ProjectReference Include="..\Common\Common.csproj" />
     </ItemGroup>
 
 </Project>

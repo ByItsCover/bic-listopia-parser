@@ -1,8 +1,8 @@
 using System.Text.Json.Serialization;
 
-namespace ListopiaParser.Entities;
+namespace Common.Entities;
 
-public class EditionsResponse
+public class BooksResponse
 {
     public required List<Book> Books { get; init; }
 }
@@ -11,6 +11,8 @@ public class Book
 {
     public required int Id { get; init; }
     public required string? Title { get; init; }
+    [JsonPropertyName("users_count")]
+    public int UsersCount { get; init; }
     [JsonPropertyName("default_cover_edition")]
     public required Edition? DefaultCoverEdition { get; init; }
 }

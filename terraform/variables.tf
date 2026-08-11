@@ -42,3 +42,16 @@ variable "batch_memory" {
   description = "Memory size for batch job"
   default     = 512
 }
+
+# EventBridge
+
+variable "hot_cover_parse_frequency" {
+  type        = string
+  description = "The cron schedule frequency at which the hot cover parser job should run"
+}
+
+variable "scheduler_arn" {
+  type        = string
+  description = "Target ARN for EventBridge scheduler"
+  default     = "arn:aws:scheduler:::aws-sdk:batch:submitJob"
+}

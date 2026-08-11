@@ -23,7 +23,6 @@ public class ListopiaServiceTests
         {
             GoodreadsBase = "https://www.goodreads.com",
             ListopiaUrl = "https://www.goodreads.com/list/show/001.TestList",
-            BucketName = "cover_dump",
             PageStart = 1,
             PageCount = 10,
             MaxParallelCount = 2
@@ -32,8 +31,7 @@ public class ListopiaServiceTests
         _mockHttp = new MockHttpMessageHandler();
         _loggerMock = new Mock<ILogger<ListopiaService>>();
         
-        var client = new HttpClient(_mockHttp);
-        _sut = new ListopiaService(client, _options, _loggerMock.Object);
+        _sut = new ListopiaService(new HttpClient(_mockHttp), _options, _loggerMock.Object);
     }
 
     [Test]
