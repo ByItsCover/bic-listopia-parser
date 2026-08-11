@@ -125,7 +125,7 @@ public class HardcoverServiceTests
                         query PopularCovers($popular_count: Int) {
                             books(
                                 order_by: [{users_count: desc}]
-                                limit $popular_count
+                                limit: $popular_count
                             ) {
                                 id
                                 title
@@ -201,7 +201,7 @@ public class HardcoverServiceTests
                         query TrendingBookIds($trending_count: Int) {
                             books_trending(
                                 duration: month,
-                                limit $trending_count
+                                limit: $trending_count
                             ) {
                                 ids
                             }
