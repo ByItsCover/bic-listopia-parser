@@ -73,7 +73,7 @@ public class HardcoverService : IHardcoverService
                 CoverUrl = b.DefaultCoverEdition.Image!.Url
             });
         
-        _logger.LogInformation("Retrieved {Count} books", response.Data.Books);
+        _logger.LogInformation("Retrieved {Count} books", response.Data.Books.Count);
         
         return covers;
     }
@@ -124,7 +124,7 @@ public class HardcoverService : IHardcoverService
                 UsersCount = b.UsersCount
             });
         
-        _logger.LogInformation("Retrieved {Count} popular books", response.Data.Books);
+        _logger.LogInformation("Retrieved {Count} popular books", response.Data.Books.Count);
         
         return covers;
     }
@@ -204,7 +204,7 @@ public class HardcoverService : IHardcoverService
                 UsersCount = b.UsersCount
             });
         
-        _logger.LogInformation("Retrieved {Count} trending books", coversResponse.Data.Books);
+        _logger.LogInformation("Retrieved {Count} trending books", coversResponse.Data.Books.Count);
         
         return covers;
     }
