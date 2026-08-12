@@ -8,4 +8,4 @@ dotnet_env                = "Production"
 max_duration              = 1800
 batch_vcpu                = 2
 batch_memory              = 2048
-hot_cover_parse_frequency = "cron(30 12 * * ? *)" # Every day at 8:30 AM EST
+hot_cover_parse_frequency = "cron(15 12 * * ? *)" # Every day at 8:15 AM EST
