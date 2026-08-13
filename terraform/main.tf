@@ -1,5 +1,6 @@
 locals {
   ecs_execution_role_arn = data.terraform_remote_state.bic_infra.outputs.ecs_execution_role_arn
+  job_role_arn           = data.terraform_remote_state.bic_infra.outputs.job_role_arn
   hardcover_secret_arn   = data.terraform_remote_state.bic_infra.outputs.hardcover_secret_arn
   cover_dump_name        = data.terraform_remote_state.bic_infra.outputs.s3_cover_dump_name
   s3_db_uri              = data.terraform_remote_state.bic_infra.outputs.s3_db_uri
@@ -13,6 +14,8 @@ resource "aws_batch_job_definition" "job" {
     image = data.aws_ecr_image.server_image.image_uri
 
     executionRoleArn = local.ecs_execution_role_arn
+
+    jobRoleArn = local.job_role_arn
 
     resourceRequirements = [
       {
