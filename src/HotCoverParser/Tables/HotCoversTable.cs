@@ -29,12 +29,8 @@ public class HotCoversTable : IHotCoversTable
         var (coverRecords, typeValue) = MapCoversToRecords(covers, HotEnum.Popular, _schema);
         var insertQuery = _table.MergeInsert(["cover_id", "type"])
             .WhenMatchedUpdateAll()
-            .WhenNotMatchedInsertAll();
-        if (type == HotEnum.Trending)
-        {
-            insertQuery = insertQuery
-                .WhenNotMatchedBySourceDelete($"type = '${typeValue}'");
-        }
+            .WhenNotMatchedInsertAll()
+            .WhenNotMatchedBySourceDelete($"type = '${typeValue}'");
 
         return await insertQuery.Execute(coverRecords);
     }
