@@ -26,7 +26,7 @@ public class HotCoversTable : IHotCoversTable
     public async Task<MergeResult> InsertCovers(Task<IEnumerable<Cover>> coverTasks, HotEnum type)
     {
         var covers = await coverTasks;
-        var (coverRecords, typeValue) = MapCoversToRecords(covers, HotEnum.Popular, _schema);
+        var (coverRecords, typeValue) = MapCoversToRecords(covers, type, _schema);
         var insertQuery = _table.MergeInsert(["cover_id", "type"])
             .WhenMatchedUpdateAll()
             .WhenNotMatchedInsertAll()
