@@ -83,6 +83,7 @@ public class HotCoverParserRunner : BackgroundService
         
         _logger.LogInformation("{Inserted} popular covers inserted", tableRes.NumInsertedRows);
         _logger.LogInformation("{Deleted} popular covers deleted", tableRes.NumDeletedRows);
+        _logger.LogInformation("{Updated} popular covers updated", tableRes.NumUpdatedRows);
     }
     
     private async Task InsertTrendingCovers(Task<IEnumerable<Cover>> coverTasks)
@@ -92,5 +93,6 @@ public class HotCoverParserRunner : BackgroundService
         
         _logger.LogInformation("{Inserted} trending covers inserted", tableRes.NumInsertedRows);
         _logger.LogInformation("{Deleted} trending covers deleted", tableRes.NumDeletedRows);
+        _logger.LogInformation("{Updated} trending covers updated", tableRes.NumUpdatedRows);
     }
 }
