@@ -27,13 +27,10 @@ public class HotCoversTable : IHotCoversTable
     {
         var covers = await coverTasks;
         var (coverRecords, typeValue) = MapCoversToRecords(covers, type, _schema);
-        Console.WriteLine("Logging res");
-        var res = await _table.Head(51);
-        Console.WriteLine(res);
         var insertQuery = _table.MergeInsert(["cover_id", "type"])
             .WhenMatchedUpdateAll()
             .WhenNotMatchedInsertAll()
-            .WhenNotMatchedBySourceDelete($"type = '${typeValue}'");
+            .WhenNotMatchedBySourceDelete($"type = '{typeValue}'");
 
         return await insertQuery.Execute(coverRecords);
     }
