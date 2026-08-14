@@ -82,6 +82,7 @@ public class HotCoverParserRunner : BackgroundService
         var tableRes = await hotCoversTable.InsertCovers(coverTasks, HotEnum.Popular);
         
         _logger.LogInformation("{Inserted} popular covers inserted", tableRes.NumInsertedRows);
+        _logger.LogInformation("{Deleted} popular covers deleted", tableRes.NumDeletedRows);
     }
     
     private async Task InsertTrendingCovers(Task<IEnumerable<Cover>> coverTasks)
