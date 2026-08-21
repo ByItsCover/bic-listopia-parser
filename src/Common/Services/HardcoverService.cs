@@ -136,7 +136,7 @@ public class HardcoverService : IHardcoverService
             Query = """
                     query TrendingBookIds($trending_count: Int) {
                         books_trending(
-                            duration: month,
+                            duration: week,
                             limit: $trending_count
                         ) {
                             ids

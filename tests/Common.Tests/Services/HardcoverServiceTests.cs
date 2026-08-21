@@ -200,7 +200,7 @@ public class HardcoverServiceTests
                 query = """
                         query TrendingBookIds($trending_count: Int) {
                             books_trending(
-                                duration: month,
+                                duration: week,
                                 limit: $trending_count
                             ) {
                                 ids
