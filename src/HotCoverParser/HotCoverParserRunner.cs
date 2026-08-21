@@ -45,7 +45,7 @@ public class HotCoverParserRunner : BackgroundService
             
             var coverDumpTask = DumpAllCovers(popularCoversTask, trendingCoversTask, cancellationToken);
             var popularInsertedTask = InsertPopularCovers(popularCoversTask);
-            var trendingInsertedTask = InsertTrendingCovers(popularCoversTask);
+            var trendingInsertedTask = InsertTrendingCovers(trendingCoversTask);
 
             await Task.WhenAll(
                 coverDumpTask,
